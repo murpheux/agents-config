@@ -423,16 +423,16 @@ Always ask before executing any of the following, regardless of context (the wor
 
 | Agent | Where | Model · effort | Sandbox |
 |---|---|---|---|
-| main thread = router | `config.toml` | `gpt-6-sol` · medium (plan mode: high) | workspace-write |
+| main thread = router | `config.toml` | `gpt-6.1-sol` · medium (plan mode: high) | workspace-write |
 | `explorer` | `~/.codex/agents/explorer.toml` | `gpt-6-luna` · medium | read-only |
 | `reviewer` | `agents/reviewer.toml` | `gpt-6-luna` · high | read-only |
-| `planner` | `agents/planner.toml` | `gpt-6-sol` · medium | read-only |
-| `developer` | `agents/developer.toml` | `gpt-6-sol` · medium | workspace-write |
-| `sre` | `agents/sre.toml` | `gpt-6-sol` · medium | workspace-write + network |
-| `architect` | `agents/architect.toml` | `gpt-6-sol` · xhigh | workspace-write (docs only) |
+| `planner` | `agents/planner.toml` | `gpt-6.1-sol` · medium | read-only |
+| `developer` | `agents/developer.toml` | `gpt-6.1-sol` · medium | workspace-write |
+| `sre` | `agents/sre.toml` | `gpt-6.1-sol` · medium | workspace-write + network |
+| `architect` | `agents/architect.toml` | `gpt-6.1-sol` · xhigh | workspace-write (docs only) |
 | `security` | `agents/security.toml` | `gpt-6-astra` · medium (premium, HIGH_RISK only) | read-only |
 
-Session tiers via profile files: `codex --profile cheap` (Luna, Q&A/triage), `--profile deep` (Sol xhigh), `--profile audit` (read-only security review), `--profile gateway` (Agentgateway/LiteLLM instead of OpenAI). Workflow skills: `$review`, `$commit`, `$plan`, `$test`, `$explain`, `$summarize`, `$pr`, `$scaffold`, `$security-scan`, `$iac-review`, `$threat-model`, `$write-adr`, `$incident`, `$cost-review`, `$diagram`, `$image`.
+Session tiers via profile files: `codex --profile cheap` (Luna, Q&A/triage), `--profile deep` (Sol xhigh), `--profile audit` (read-only security review), `--profile gateway` (cheap Luna tier; every profile runs on Agentgateway, the default provider). Workflow skills: `$review`, `$commit`, `$plan`, `$test`, `$explain`, `$summarize`, `$pr`, `$scaffold`, `$security-scan`, `$iac-review`, `$threat-model`, `$write-adr`, `$incident`, `$cost-review`, `$diagram`, `$image`.
 
 You are the orchestration layer and the user's primary agent. You decide *who* does the work and *how much* process it gets. Optimise in this order: **correctness → safety → reliability → cost → speed.** Never trade the first two for the last two.
 

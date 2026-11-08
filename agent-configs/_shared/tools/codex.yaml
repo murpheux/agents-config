@@ -25,16 +25,16 @@ placeholders:
   TOOL_TEAM: |
     | Agent | Where | Model · effort | Sandbox |
     |---|---|---|---|
-    | main thread = router | `config.toml` | `gpt-6-sol` · medium (plan mode: high) | workspace-write |
+    | main thread = router | `config.toml` | `gpt-6.1-sol` · medium (plan mode: high) | workspace-write |
     | `explorer` | `~/.codex/agents/explorer.toml` | `gpt-6-luna` · medium | read-only |
     | `reviewer` | `agents/reviewer.toml` | `gpt-6-luna` · high | read-only |
-    | `planner` | `agents/planner.toml` | `gpt-6-sol` · medium | read-only |
-    | `developer` | `agents/developer.toml` | `gpt-6-sol` · medium | workspace-write |
-    | `sre` | `agents/sre.toml` | `gpt-6-sol` · medium | workspace-write + network |
-    | `architect` | `agents/architect.toml` | `gpt-6-sol` · xhigh | workspace-write (docs only) |
+    | `planner` | `agents/planner.toml` | `gpt-6.1-sol` · medium | read-only |
+    | `developer` | `agents/developer.toml` | `gpt-6.1-sol` · medium | workspace-write |
+    | `sre` | `agents/sre.toml` | `gpt-6.1-sol` · medium | workspace-write + network |
+    | `architect` | `agents/architect.toml` | `gpt-6.1-sol` · xhigh | workspace-write (docs only) |
     | `security` | `agents/security.toml` | `gpt-6-astra` · medium (premium, HIGH_RISK only) | read-only |
 
-    Session tiers via profile files: `codex --profile cheap` (Luna, Q&A/triage), `--profile deep` (Sol xhigh), `--profile audit` (read-only security review), `--profile gateway` (Agentgateway/LiteLLM instead of OpenAI). Workflow skills: `$review`, `$commit`, `$plan`, `$test`, `$explain`, `$summarize`, `$pr`, `$scaffold`, `$security-scan`, `$iac-review`, `$threat-model`, `$write-adr`, `$incident`, `$cost-review`, `$diagram`, `$image`.
+    Session tiers via profile files: `codex --profile cheap` (Luna, Q&A/triage), `--profile deep` (Sol xhigh), `--profile audit` (read-only security review), `--profile gateway` (cheap Luna tier; every profile runs on Agentgateway, the default provider). Workflow skills: `$review`, `$commit`, `$plan`, `$test`, `$explain`, `$summarize`, `$pr`, `$scaffold`, `$security-scan`, `$iac-review`, `$threat-model`, `$write-adr`, `$incident`, `$cost-review`, `$diagram`, `$image`.
 
     @@ROUTER@@
   TOOL_APPROVALS: |
@@ -48,16 +48,16 @@ agents:
     toml: {name: reviewer, description: "Cheap independent read-only review of a diff for correctness, regressions, missing tests and obvious security issues.", model: gpt-6-luna, model_reasoning_effort: high, sandbox_mode: read-only}
   - id: planner
     out: home/.codex/agents/planner.toml
-    toml: {name: planner, description: "Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan. Read-only.", model: gpt-6-sol, model_reasoning_effort: medium, sandbox_mode: read-only}
+    toml: {name: planner, description: "Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan. Read-only.", model: gpt-6.1-sol, model_reasoning_effort: medium, sandbox_mode: read-only}
   - id: developer
     out: home/.codex/agents/developer.toml
-    toml: {name: developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint.", model: gpt-6-sol, model_reasoning_effort: medium, sandbox_mode: workspace-write}
+    toml: {name: developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint.", model: gpt-6.1-sol, model_reasoning_effort: medium, sandbox_mode: workspace-write}
   - id: sre
     out: home/.codex/agents/sre.toml
-    toml: {name: sre, description: "SRE/DevOps for live systems: incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures. Read-only diagnosis first; mutations need approval.", model: gpt-6-sol, model_reasoning_effort: medium, sandbox_mode: workspace-write, sandbox_workspace_write: {network_access: true}}
+    toml: {name: sre, description: "SRE/DevOps for live systems: incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures. Read-only diagnosis first; mutations need approval.", model: gpt-6.1-sol, model_reasoning_effort: medium, sandbox_mode: workspace-write, sandbox_workspace_write: {network_access: true}}
   - id: architect
     out: home/.codex/agents/architect.toml
-    toml: {name: architect, description: "Solution & cloud architecture, distributed systems, migrations, trade-off decisions, ADRs and diagrams; hard root-cause analysis.", model: gpt-6-sol, model_reasoning_effort: xhigh, sandbox_mode: workspace-write}
+    toml: {name: architect, description: "Solution & cloud architecture, distributed systems, migrations, trade-off decisions, ADRs and diagrams; hard root-cause analysis.", model: gpt-6.1-sol, model_reasoning_effort: xhigh, sandbox_mode: workspace-write}
   - id: security
     out: home/.codex/agents/security.toml
     toml: {name: security, description: "Security specialist: threat models, IAM/policy review, secrets/supply-chain/vuln review; independent reviewer for HIGH_RISK changes. Read-only; runs scanners.", model: gpt-6-astra, model_reasoning_effort: medium, sandbox_mode: read-only}

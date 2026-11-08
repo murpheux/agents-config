@@ -2,4 +2,4 @@
 model = "gpt-6-luna"
 model_reasoning_effort = "high"
 model_verbosity = "low"
-web_search = "cached"
+web_search = "disabled"                 # OpenAI-hosted tool; not available via the gateway

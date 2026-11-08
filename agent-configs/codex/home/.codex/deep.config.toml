@@ -1,5 +1,5 @@
 # ~/.codex/deep.config.toml — `codex --profile deep`: hard design / debugging sessions.
-model = "gpt-6-sol"
+model = "gpt-6.1-sol"
 model_reasoning_effort = "xhigh"
 plan_mode_reasoning_effort = "xhigh"
 model_verbosity = "medium"
