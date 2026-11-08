@@ -1,0 +1,18 @@
+{
+  "$schema": "https://pi.dev/schemas/settings.schema.json",
+  "defaultProvider": "agentgateway",
+  "defaultModel": "claude-sonnet-5-5",
+  "defaultThinkingLevel": "medium",
+  "modelThinkingLevels": {
+    "agentgateway/deepseek-flash": "off",
+    "agentgateway/claude-sonnet-5-5": "medium",
+    "agentgateway/gpt-6.1-sol": "high",
+    "agentgateway/claude-opus-5-5": "high",
+    "openrouter/openai/gpt-6-sol": "medium",
+    "openrouter/anthropic/claude-opus-5.5": "high"
+  },
+  "enabledModels": ["agentgateway/*", "openrouter/*"],
+  "defaultTools": ["+grep", "+find", "+ls"],
+  "defaultProjectTrust": "ask",
+  "enableSkillCommands": true
+}

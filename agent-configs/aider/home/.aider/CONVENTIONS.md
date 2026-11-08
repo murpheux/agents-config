@@ -249,7 +249,7 @@ All services run on `scarlet` (Docker Swarm) unless noted.
 | MinIO | `http://scarlet:9001/login` |
 | Grafana | `http://sclet:3000/login` |
 | Elasticsearch / Kibana | `http://scarlet:5601/app/home#/` |
-| Agentgateway (LLM gateway used by AI coding agents) | `https://scarlet:4000/v1` |
+| Agentgateway (LLM gateway used by AI coding agents) | `https://scarlet:9443/v1` |
 
 ### Observability & Debugging Stack
 

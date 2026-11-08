@@ -69,7 +69,7 @@ notification_condition = "unfocused"
 # ── Providers (OpenAI via `codex login` is the default; these are for the gateway profile) ─
 [model_providers.scarlet]
 name = "Agentgateway (LiteLLM) on scarlet"
-base_url = "https://scarlet:4000/v1"
+base_url = "https://scarlet:9443/v1"
 wire_api = "responses"                  # LiteLLM >= 1.63.8 exposes /v1/responses; "chat" is a hard error
 request_max_retries = 4
 stream_max_retries = 5

@@ -14,7 +14,7 @@
 <h2>3. What was built</h2>
 <table><tr><th>File</th><th>Purpose</th></tr>
 <tr><td><code>.claude/settings.json</code></td><td><code>agent: router</code>, model <code>sonnet</code> + effort medium for direct sessions, <code>autoCompactWindow 200000</code>, permissions (allow read-only/validation, ask for commits/plan/apply/helm/op, deny destructive + secret files), guard hook, sandbox, env, status line</td></tr>
-<tr><td><code>.claude/settings.gateway.json</code></td><td>optional overlay (<code>./install.sh --gateway</code>): <code>ANTHROPIC_BASE_URL=https://scarlet:4000</code>, key via <code>apiKeyHelper</code> (<code>op read</code> executed by Claude Code, never the model), gateway model discovery, <code>NODE_EXTRA_CA_CERTS</code></td></tr>
+<tr><td><code>.claude/settings.gateway.json</code></td><td>optional overlay (<code>./install.sh --gateway</code>): <code>ANTHROPIC_BASE_URL=https://scarlet:9443</code>, key via <code>apiKeyHelper</code> (<code>op read</code> executed by Claude Code, never the model), gateway model discovery, <code>NODE_EXTRA_CA_CERTS</code></td></tr>
 <tr><td><code>.claude/CLAUDE.md</code></td><td>full global instructions (every fact of the original AGENTS.md; Claude-specific §13/§14/§17)</td></tr>
 <tr><td><code>.claude/agents/*.md</code></td><td>router, explore (overrides built-in), reviewer, planner, developer, sre, architect, security</td></tr>
 <tr><td><code>.claude/commands/*.md</code></td><td>16 commands with <code>!`…`</code> context injection, pre-approved read-only <code>allowed-tools</code>, <code>model: haiku</code> on cheap ones</td></tr>

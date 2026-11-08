@@ -21,7 +21,7 @@ Topology, hosts, services and endpoints are in AGENTS.md §5–§8. This skill a
 ## Security checks to flag proactively
 - Services bound to `0.0.0.0` without auth (MinIO console, Prometheus, cAdvisor, Kibana are plain HTTP on the LAN).
 - Default credentials on router/switch/printers; UPnP enabled on `router1`; exposed admin UIs port-forwarded to WAN.
-- TLS: gateway on `https://scarlet:4000` uses a private cert — trust it with `NODE_EXTRA_CA_CERTS`, never by disabling verification.
+- TLS: gateway on `https://scarlet:9443` uses a private cert — trust it with `NODE_EXTRA_CA_CERTS`, never by disabling verification.
 - Both DNS servers must stay in sync; a single Pi-hole failure should not break resolution.
 
 ## Package managers

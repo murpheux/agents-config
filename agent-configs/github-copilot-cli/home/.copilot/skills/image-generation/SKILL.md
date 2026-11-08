@@ -35,11 +35,11 @@ ax.grid(alpha=.3); fig.tight_layout(); fig.savefig("docs/img/aws-cost.png")
 SVG rules: `viewBox` set, no external fonts/URLs, `<title>` for accessibility, text as `<text>` (not paths) unless it must be pixel-exact.
 
 ## AI image generation (agentgateway, OpenAI-compatible Images API)
-Prerequisite: the gateway exposes an image model (check `GET https://scarlet:4000/v1/models`; e.g. an OpenAI `gpt-image-*`, Google Imagen, or FLUX route configured in the gateway). Use its exact model name.
+Prerequisite: the gateway exposes an image model (check `GET https://scarlet:9443/v1/models`; e.g. an OpenAI `gpt-image-*`, Google Imagen, or FLUX route configured in the gateway). Use its exact model name.
 
 ```bash
 mkdir -p docs/img
-curl -sS https://scarlet:4000/v1/images/generations \
+curl -sS https://scarlet:9443/v1/images/generations \
   -H "Authorization: Bearer $AGENTGATEWAY_API_KEY" -H "Content-Type: application/json" \
   -d '{"model":"<image-model>","prompt":"<prompt>","size":"1024x1024","n":1}' \
   | jq -r '.data[0].b64_json' | base64 -d > docs/img/<name>.png

@@ -21,7 +21,7 @@ alias:
 auto-accept-architect: false                  # review the architect's plan before the editor applies it
 
 # ── Gateway / TLS (keys are injected by `op run`, never stored here) ──────────────────
-openai-api-base: https://scarlet:4000/v1
+openai-api-base: https://scarlet:9443/v1
 verify-ssl: true
 set-env:
   - SSL_CERT_FILE=__CA_BUNDLE__               # full system bundle incl. the home-lab CA (not the CA alone)

@@ -35,7 +35,7 @@ cat <<EOF
 
 Next steps (in the Cline panel → Settings; these live in extension state, not files)
   1. Pin the build: add templates/vscode-settings.fragment.json to VS Code user settings ("cline.rollout.bundleOverride": "next").
-  2. Providers: Plan = OpenRouter openai/gpt-6-sol (reasoning high); Act = LiteLLM https://scarlet:4000/v1 claude-sonnet-5 (medium).
+  2. Providers: Plan = OpenRouter openai/gpt-6-sol (reasoning high); Act = LiteLLM https://scarlet:9443/v1 claude-sonnet-5 (medium).
      Enable "Use different models for Plan and Act". Leave API keys empty — launch with:
        op run --env-file ~/.cline/cline.op.env -- code .
   3. Auto-approve: Read ✔, Edit ✗, Execute commands ✗, Browser ✗, MCP ✔ (read-only servers). Hooks: enabled. Auto-condense: on.

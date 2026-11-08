@@ -1,0 +1,39 @@
+{
+  "mcpServers": {
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_PAT}",
+        "X-MCP-Toolsets": "repos,issues,pull_requests,actions,code_security",
+        "X-MCP-Readonly": "true"
+      },
+      "exposure": "deferred",
+      "description": "GitHub repos/issues/PRs/Actions, read-only toolset. Writes (PRs, issues) go through the gh CLI, where the guardrails extension's ask-gate applies."
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      },
+      "description": "Up-to-date library/framework documentation lookup."
+    },
+    "mslearn": {
+      "url": "https://learn.microsoft.com/api/mcp",
+      "description": "Official Microsoft Learn docs for C#/.NET, Azure, PowerShell, Entra ID. No auth required."
+    },
+    "awsdocs": {
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": {
+        "FASTMCP_LOG_LEVEL": "ERROR",
+        "AWS_DOCUMENTATION_PARTITION": "aws"
+      },
+      "description": "AWS documentation search/read. No AWS credentials involved. Requires `uv` on PATH."
+    },
+    "terraform": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "hashicorp/terraform-mcp-server"],
+      "description": "HashiCorp Terraform registry (providers, modules, policies). Requires Docker."
+    }
+  }
+}
