@@ -1,0 +1,9 @@
+{
+  "_comment": "Merged into ~/.tau/providers.json by install.sh (lib/merge_json.py keeps your other keys). Agentgateway is the default provider, so session auto-naming also goes through it instead of OpenAI; default_model must be an exact gateway id (no 'agentgateway/' prefix).",
+  "default_provider": "agentgateway",
+  "provider_preferences": {
+    "agentgateway": {
+      "default_model": "deepseek-flash"
+    }
+  }
+}

@@ -1,0 +1,55 @@
+# Build spec for Tau (huggingface/tau, tau-ai 0.4.x — a Pi-style single-agent harness).
+# Rendered by _shared/build.py into tau/home/.tau (Tau's user-data home; TAU_HOME overrides it).
+# Hand-maintained alongside this spec: catalog.toml, providers.fragment.json, extensions/guardrails.py,
+# prompts/*.md and tau-env.sh (Tau-specific; no shared source to generate them from).
+instructions:
+  - out: home/.tau/AGENTS.md
+guard_out:
+  - home/.tau/guard
+body_subs:
+  DEV_PERMISSIONS: "You run with the OS permissions of the account running Tau — Tau has no per-tool approval prompts. The `guardrails` extension's `tool_call` hook blocks destructive, secret-reading and interactive commands and protected paths (and refuses the approval-required ones such as `git push`), so treat what it allows as trusted, and still ask before anything in the Destructive operation gate."
+placeholders:
+  TOOL_NOTE: |
+    > **Tau note:** this is `~/.tau/AGENTS.md` (Tau's user-data home; `TAU_HOME` overrides it). Tau also loads `~/.agents/AGENTS.md` and the project's ancestor, `.tau/` and `.agents/` `AGENTS.md` files (project files only after project trust). Tau is single-agent and has no permission rules: the `guardrails` extension (`~/.tau/extensions/guardrails.py`, a fail-closed `tool_call` hook running the shared guard) is the enforcement layer; everything it allows runs with your account's OS permissions, so use a container or VM for untrusted work.
+  TOOL_ENFORCEMENT_SUMMARY: |
+    the `guardrails` extension (`~/.tau/extensions/guardrails.py` → shared `~/.tau/guard/guard.py` + `guardrails.json`; a `tool_call` hook, and Tau blocks the call if the hook errors), project trust for project-level inputs, and the `ggshield` pre-commit hook
+  TOOL_ENFORCEMENT_TEXT: |
+    The guardrails extension is authoritative — its `tool_call` hook runs before every `bash`/`read`/`write`/`edit` call.
+  TOOL_INTERACTIVE: |
+    The guardrails extension blocks interactive programs (editors, pagers, bare REPLs).
+  TOOL_TEAM: |
+    Tau runs one model in one session (no subagents), so the router is Murpheux + skill and model switches. Every model is an Agentgateway model on the `agentgateway` provider (`https://scarlet:9443/v1`):
+
+    | Role | How in Tau | Model |
+    |---|---|---|
+    | router / quick answers | you, deciding what to invoke next | `deepseek-flash` (default) |
+    | explorer | the built-in `read`/`bash` tools, used directly | `deepseek-flash` |
+    | planner | `/skill:role-planner` | `openrouter/openai/gpt-6-sol` |
+    | developer | `/skill:role-developer` | `claude-sonnet-5` |
+    | sre | `/skill:role-sre` + `incident-response`/`docker-swarm`/`kubernetes` | `claude-sonnet-5` |
+    | architect | `/skill:role-architect` | `openrouter/openai/gpt-6-sol` |
+    | reviewer | `/skill:role-reviewer` on the diff | `deepseek-flash` |
+    | security | `/skill:role-security` | `openrouter/anthropic/claude-opus-5-5` — HIGH_RISK and security only |
+
+    Switch models with `/model` (or start with `tau --model <id>`). Topic skills (`golang`, `terraform`, `aws`, …) load from `~/.agents/skills`, role skills from `~/.tau/skills`; both are routed by description or forced with `/skill:<name>`. Prompt templates (`/review`, `/plan`, `/commit`, …) live in `~/.tau/prompts`.
+  TOOL_APPROVALS: |
+    How Tau enforces this: Tau has no per-tool approval prompts — `read`/`write`/`edit`/`bash` run immediately with the OS permissions of the account running Tau. The `guardrails` extension's `tool_call` hook blocks the destructive, secret-reading and interactive commands and protected paths above, and also refuses the approval-required ones (`git push`, `git reset --hard`, `docker stack rm`, destructive SQL) — prepare those and let Murpheux run them; project trust gates project-level skills, prompts, extensions and `AGENTS.md`; `~/AI_Workspace/` is the only tree to touch without asking first.
+agents:
+  - id: planner
+    out: home/.tau/skills/role-planner/SKILL.md
+    frontmatter: {name: role-planner, description: "Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan before implementing. Read-only."}
+  - id: developer
+    out: home/.tau/skills/role-developer/SKILL.md
+    frontmatter: {name: role-developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint. Use for NORMAL and COMPLEX implementation."}
+  - id: sre
+    out: home/.tau/skills/role-sre/SKILL.md
+    frontmatter: {name: role-sre, description: "SRE/DevOps for live systems — incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures, observability. Read-only diagnosis first; mutations need approval."}
+  - id: architect
+    out: home/.tau/skills/role-architect/SKILL.md
+    frontmatter: {name: role-architect, description: "Solution & cloud architecture (AWS/Azure/GCP), distributed systems, platform/Kubernetes design, migrations, trade-offs, ADRs and diagrams; hard root-cause analysis."}
+  - id: reviewer
+    out: home/.tau/skills/role-reviewer/SKILL.md
+    frontmatter: {name: role-reviewer, description: "Cheap independent read-only review of a diff for correctness, regressions, missing tests and obvious security issues. Use after meaningful changes."}
+  - id: security
+    out: home/.tau/skills/role-security/SKILL.md
+    frontmatter: {name: role-security, description: "Security specialist — threat modeling, IAM/policy review, secrets and supply-chain analysis, vulnerability review of code/IaC/containers; the independent reviewer for HIGH_RISK changes. Read-only; runs scanners."}

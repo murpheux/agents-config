@@ -1,0 +1,25 @@
+# ~/.tau/catalog.toml — user overlay on Tau's built-in provider catalog (applied last).
+# Agentgateway: OpenAI-compatible chat completions at https://scarlet:9443/v1.
+#   - No credential_name: Tau checks its plaintext credentials.json BEFORE api_key_env, so the key
+#     comes only from AGENTGATEWAY_API_KEY, which the `tau` wrapper (~/.tau/tau-env.sh) fetches
+#     from 1Password at launch.
+#   - Model ids are exact gateway ids (Tau sends them verbatim — no provider prefix). Only models
+#     the gateway serves over chat completions: Claude 5.5 needs the Messages API and gpt-6.1-sol
+#     the Responses API, so use claude-sonnet-5 / the openrouter/* passthrough instead.
+schema_version = 1
+
+[[providers]]
+name = "agentgateway"
+display_name = "Agentgateway (scarlet)"
+kind = "openai-compatible"
+base_url = "https://scarlet:9443/v1"
+api_key_env = "AGENTGATEWAY_API_KEY"
+models = [
+  "deepseek-flash",
+  "claude-sonnet-5",
+  "openrouter/openai/gpt-6-sol",
+  "openrouter/anthropic/claude-opus-5-5",
+]
+default_model = "deepseek-flash"
+docs_url = "https://scarlet:9443/v1"          # required by Tau's catalog schema
+context_windows = { "deepseek-flash" = 128000 }

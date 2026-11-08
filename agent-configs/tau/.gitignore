@@ -1,0 +1,19 @@
+# Tau runtime state and secrets — never commit. Tau writes these into ~/.tau itself;
+# install.sh copies only the explicit config files listed in its CONFIG_FILES array.
+home/.tau/credentials.json
+home/.tau/models-store.json
+home/.tau/providers.json
+home/.tau/sessions/
+home/.tau/logs/
+home/.tau/cache/
+home/.tau/state/
+home/.tau/trust.json
+home/.tau/trust.json.lock
+home/.tau/ca-bundle.pem
+home/.tau/extensions/*/
+.state-snapshot/
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ — but lib/ holds this installer's helpers.
+!lib/
