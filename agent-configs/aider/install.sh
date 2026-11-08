@@ -12,7 +12,16 @@ install_tree aider "$HERE/home/.aider" "$HOME/.aider"
 run chmod +x "$HOME/.aider/bin/lint-go"
 run chmod 600 "$HOME/.aider/aider.op.env"
 
-need aider   "install with: uv tool install --force --python python3.12 --with pip aider-chat@latest"
+# Aider's Python/OpenSSL trusts only SSL_CERT_FILE (never the macOS keychain): export the OS trust
+# store, home-lab CA included, and verify it against the gateway.
+if [[ "$DRY_RUN" == 1 ]]; then echo "DRY: node lib/build-ca-bundle.mjs $HOME/.aider/ca-bundle.pem"
+elif command -v node >/dev/null; then
+  node "$HERE/lib/build-ca-bundle.mjs" "$HOME/.aider/ca-bundle.pem" || die "CA bundle does not verify scarlet:9443 — is the home-lab CA trusted in the keychain?"
+else
+  die "node >= 22.15 is required to export the OS trust store (Aider's SSL_CERT_FILE points at ~/.aider/ca-bundle.pem)"
+fi
+
+need aider  "install with: uv tool install --force --python python3.12 --with pip aider-chat@latest"
 need op      "1Password CLI is required by the ai* aliases"
 need ggshield "pre-commit secret scanning (git-commit-verify: true runs hooks)"
 
@@ -20,7 +29,9 @@ cat <<'EOF'
 
 Next steps
   1. Add to ~/.zshrc (or ~/.bashrc):   source ~/.aider/aider-aliases.sh
-  2. Edit ~/.aider/aider.op.env so the op:// references match your 1Password vault.
+  2. Credentials: ~/.aider/aider.op.env uses op://private/agent-gateway-api-key/password (the same item
+     as AGENTGATEWAY_API_KEY in ~/.zshrc). Every model, arch/sec included, goes through Agentgateway.
+     Smoke test:  ai-ask --message "Reply with: ok" --no-git
   3. Per repo: copy templates/.aiderignore to the repo root, and install the ggshield hook:
        ggshield install --mode local        # or add ggshield to .pre-commit-config.yaml
   4. Add Aider artefacts to your global gitignore:

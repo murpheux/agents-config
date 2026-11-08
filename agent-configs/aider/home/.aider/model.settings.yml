@@ -27,7 +27,7 @@
   extra_params:
     max_tokens: 8192
 
-- name: openrouter/openai/gpt-6-sol            # reasoning: architect mode planner
+- name: openai/openrouter/openai/gpt-6-sol     # reasoning: architect mode planner (gateway → OpenRouter)
   edit_format: diff
   use_repo_map: true
   weak_model_name: openai/deepseek-flash
@@ -35,12 +35,8 @@
   editor_edit_format: editor-diff
   use_temperature: false
   accepts_settings: [reasoning_effort]
-  extra_params:
-    extra_body:
-      provider:
-        data_collection: deny                  # OpenRouter: only providers that don't train on prompts
 
-- name: openrouter/anthropic/claude-opus-5.5   # premium: security review (ask mode)
+- name: openai/openrouter/anthropic/claude-opus-5-5  # premium: security review (gateway → OpenRouter)
   edit_format: diff
   use_repo_map: true
   weak_model_name: openai/deepseek-flash
@@ -49,7 +45,3 @@
   cache_control: true
   use_temperature: false
   accepts_settings: [reasoning_effort, thinking_tokens]
-  extra_params:
-    extra_body:
-      provider:
-        data_collection: deny

@@ -427,10 +427,10 @@ Aider has one agent loop, so the router is Murpheux + these modes/aliases (defin
 |---|---|---|
 | router / quick answers | `ai-ask` (`--chat-mode ask`) or `/ask` | cheap (`openai/deepseek-flash`) |
 | explorer | `/ask` + `/map`, `/context` mode to pick files | cheap |
-| planner + architect | `ai-arch` (`--architect`) or `/architect` — main model plans, editor model applies | reasoning (`openrouter/openai/gpt-6-sol`) → workhorse editor |
+| planner + architect | `ai-arch` (`--architect`) or `/architect` — main model plans, editor model applies | reasoning (`openai/openrouter/openai/gpt-6-sol`, via the gateway) → workhorse editor |
 | developer | `ai` (default `code` mode) | workhorse (`openai/claude-sonnet-5`, reasoning medium) |
 | reviewer | `ai-review` / `/load ~/.aider/commands/review.cmds` (ask mode on the diff) | cheap |
-| security | `ai-sec` / `/load ~/.aider/commands/security-review.cmds` (ask mode) | premium (`openrouter/anthropic/claude-opus-5.5`) |
+| security | `ai-sec` / `/load ~/.aider/commands/security-review.cmds` (ask mode) | premium (`openai/openrouter/anthropic/claude-opus-5-5`, via the gateway) |
 | sre | `ai-ask` with `/run` output (read-only commands only) | workhorse |
 | commit messages, history summaries | weak model (automatic) | cheap |
 

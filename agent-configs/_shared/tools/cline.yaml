@@ -10,55 +10,68 @@ body_subs:
   DEV_PERMISSIONS: "Edits and commands require approval; the guard hook blocks destructive and secret-reading operations."
 router_subs:
   ROUTER_CAPABILITIES: |
-    In Cline the **main task is the router**. Classify in **Plan mode** (strong reasoning model); implement in **Act mode** (workhorse model) — only Murpheux switches Plan → Act. Read-only specialists run as defined subagents on the next build / CLI (`subagent_explorer`, `subagent_reviewer`, `subagent_architect`, `subagent_security`); on the legacy build use the read-only `use_subagents` helper or a workflow (`/review.md`, `/security-scan.md`, …).
+    In Cline the **main task is the router**: classify, answer SIMPLE requests yourself, and delegate everything else to the defined subagents (next build / CLI, `~/.cline/agents/*.yaml`): `subagent_planner`, `subagent_developer`, `subagent_sre`, `subagent_architect`, `subagent_explorer`, `subagent_reviewer`, `subagent_security`. Classify and plan in **Plan mode**; delegate to `subagent_developer` / `subagent_sre` from **Act mode** (only Murpheux switches Plan → Act). On the legacy build there are no defined subagents — do developer/sre work in Act mode yourself and use the read-only `use_subagents` helper or a workflow (`/review.md`, `/security-scan.md`, …).
   DELEGATION_NOTES: |
-    - Cline subagents do **not** inherit approval settings, so every defined subagent is read-only: all edits and commands happen in the main Act session where approvals and the guard hook apply.
+    - Defined subagents inherit the session's tool policies, approval prompts and the PreToolUse guard hook (Cline 3.0.x), so `subagent_developer` edits and `subagent_sre` commands ask for approval exactly like the main session. Only developer (edit + commands) and sre (commands) can change state; every other subagent is read-only by its tool list.
     - Subagent spend is added to the task total — keep briefs tight and prefer `subagent_explorer` (cheap) for discovery.
 placeholders:
   TOOL_NOTE: |
     > **Cline note:** this global rule (`Documents/Cline/Rules/00-murpheux.md`) is loaded on every request by both extension builds and the CLI (workspace `.clinerules/` win on conflict). Long guides live in skills (`~/.cline/skills`, ~100 tokens each until used) so this file is the only always-on context.
   TOOL_ENFORCEMENT_SUMMARY: |
-    the PreToolUse guard hook (`Documents/Cline/Hooks/PreToolUse` → `~/.cline/guard/guard.py` + `guardrails.json`), Cline auto-approve settings (edits and commands require approval), read-only defined subagents, and on the legacy build `.clineignore` plus the `CLINE_COMMAND_PERMISSIONS` deny list
+    the PreToolUse guard hook (`Documents/Cline/Hooks/PreToolUse` → `~/.cline/guard/guard.py` + `guardrails.json`), Cline auto-approve settings (edits and commands require approval) that defined subagents inherit, and on the legacy build `.clineignore` plus the `CLINE_COMMAND_PERMISSIONS` deny list
   TOOL_ENFORCEMENT_TEXT: |
     The Cline guard hook and approval prompts are authoritative.
   TOOL_INTERACTIVE: |
     The guard hook blocks interactive programs (editors, pagers, bare REPLs).
   TOOL_TEAM: |
-    | Role | How in Cline | Model (provider) |
-    |---|---|---|
-    | router + planner + architect-lite | **Plan mode** | `openai/gpt-6-sol` · high (OpenRouter) |
-    | developer + sre | **Act mode** (approvals on) | `claude-sonnet-5` · medium (LiteLLM → Agentgateway) |
-    | explorer | `subagent_explorer` (read-only) | `deepseek-flash` (LiteLLM) |
-    | reviewer | `subagent_reviewer` (read-only) | `deepseek-flash` (LiteLLM) |
-    | architect | `subagent_architect` (read-only) | `openai/gpt-6-sol` (OpenRouter) |
-    | security | `subagent_security` (read-only) | `anthropic/claude-opus-5.5` (OpenRouter) |
+    All models run on the OpenAI-compatible provider → Agentgateway (`https://scarlet:9443/v1`).
+
+    | Role | How in Cline | Tools | Model |
+    |---|---|---|---|
+    | router | **main task** (this rule) — Plan mode to classify, Act mode to delegate | all (approvals on) | session model, `claude-sonnet-5` · medium |
+    | planner | `subagent_planner` | read-only | `openrouter/openai/gpt-6-sol` |
+    | developer | `subagent_developer` | read, edit, commands (approvals + guard) | `claude-sonnet-5` |
+    | sre | `subagent_sre` | read, commands, web (approvals + guard) | `claude-sonnet-5` |
+    | architect | `subagent_architect` | read-only + web | `openrouter/openai/gpt-6-sol` |
+    | explorer | `subagent_explorer` | read-only | `deepseek-flash` |
+    | reviewer | `subagent_reviewer` | read-only | `deepseek-flash` |
+    | security | `subagent_security` | read-only + web | `openrouter/anthropic/claude-opus-5-5` |
 
     Workflows: `/review.md`, `/commit.md`, `/plan.md`, `/test.md`, `/explain.md`, `/summarize.md`, `/pr.md`, `/scaffold.md`, `/security-scan.md`, `/iac-review.md`, `/threat-model.md`, `/write-adr.md`, `/incident.md`, `/cost-review.md`, `/diagram.md`, `/image.md`.
 
     @@ROUTER@@
   TOOL_APPROVALS: |
-    How Cline enforces this: read tools may auto-approve; edits, terminal commands and browser use require approval (set in Cline's auto-approve panel); the PreToolUse guard hook cancels destructive, secret-reading and interactive commands and secret-file reads/writes on both builds; defined subagents are read-only because they bypass approvals; on the legacy build `CLINE_COMMAND_PERMISSIONS` adds a deny list and `.clineignore` hides secret files from read tools.
+    How Cline enforces this: read tools may auto-approve; edits, terminal commands and browser use require approval (set in Cline's auto-approve panel); the PreToolUse guard hook cancels destructive, secret-reading and interactive commands and secret-file reads/writes on both builds; defined subagents inherit the same approval policy and guard hook (only developer and sre have edit/command tools); on the legacy build `CLINE_COMMAND_PERMISSIONS` adds a deny list and `.clineignore` hides secret files from read tools.
 agents:
+  - id: planner
+    out: home/.cline/agents/planner.yaml
+    frontmatter: {name: planner, description: "Read-only decomposition of COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan for developer, sre or architect.", tools: "read_files, search_codebase, fetch_web_content, skills", providerId: openai-compatible, modelId: openrouter/openai/gpt-6-sol, maxIterations: 25}
+  - id: developer
+    out: home/.cline/agents/developer.yaml
+    frontmatter: {name: developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD and validates with the project's build/test/lint. Edits and commands require approval.", tools: "read_files, search_codebase, editor, run_commands, skills", providerId: openai-compatible, modelId: claude-sonnet-5, maxIterations: 60}
+  - id: sre
+    out: home/.cline/agents/sre.yaml
+    frontmatter: {name: sre, description: "SRE/DevOps for live systems: incident triage, Docker Swarm, Kubernetes, cloud, CI/CD failures. Read-only diagnosis first; commands require approval; no file edits.", tools: "read_files, search_codebase, run_commands, fetch_web_content, skills", providerId: openai-compatible, modelId: claude-sonnet-5, maxIterations: 40}
   - id: explorer
     out: home/.cline/agents/explorer.yaml
-    frontmatter: {name: explorer, description: "Cheap read-only codebase/doc research; returns file paths and findings.", tools: "read_files, search_codebase", providerId: litellm, modelId: deepseek-flash, maxIterations: 15}
+    frontmatter: {name: explorer, description: "Cheap read-only codebase/doc research; returns file paths and findings.", tools: "read_files, search_codebase", providerId: openai-compatible, modelId: deepseek-flash, maxIterations: 15}
   - id: reviewer
     out: home/.cline/agents/reviewer.yaml
-    frontmatter: {name: reviewer, description: "Cheap independent read-only review of a diff (pass the diff in the brief) for correctness, regressions, missing tests and security issues.", tools: "read_files, search_codebase", providerId: litellm, modelId: deepseek-flash, maxIterations: 15}
+    frontmatter: {name: reviewer, description: "Cheap independent read-only review of a diff (pass the diff in the brief) for correctness, regressions, missing tests and security issues.", tools: "read_files, search_codebase", providerId: openai-compatible, modelId: deepseek-flash, maxIterations: 15}
   - id: architect
     out: home/.cline/agents/architect.yaml
-    frontmatter: {name: architect, description: "Read-only solution/cloud architecture and hard root-cause analysis; returns decisions, trade-offs and a hand-off plan.", tools: "read_files, search_codebase, fetch_web_content", providerId: openrouter, modelId: openai/gpt-6-sol, maxIterations: 25}
+    frontmatter: {name: architect, description: "Read-only solution/cloud architecture and hard root-cause analysis; returns decisions, trade-offs and a hand-off plan.", tools: "read_files, search_codebase, fetch_web_content", providerId: openai-compatible, modelId: openrouter/openai/gpt-6-sol, maxIterations: 25}
   - id: security
     out: home/.cline/agents/security.yaml
-    frontmatter: {name: security, description: "Read-only security review: threat models, IAM, secrets, supply chain, OWASP; independent reviewer for HIGH_RISK changes.", tools: "read_files, search_codebase, fetch_web_content", providerId: openrouter, modelId: anthropic/claude-opus-5.5, maxIterations: 25}
+    frontmatter: {name: security, description: "Read-only security review: threat models, IAM, secrets, supply chain, OWASP; independent reviewer for HIGH_RISK changes.", tools: "read_files, search_codebase, fetch_web_content", providerId: openai-compatible, modelId: openrouter/anthropic/claude-opus-5-5, maxIterations: 25}
 commands:
   format: cline
   out: home/Documents/Cline/Workflows
   args_token: "$ARGUMENTS"
   role_text:
-    developer: "Do the work in **Act mode** (approvals and the guard hook apply)."
-    sre: "Diagnose in **Act mode** with read-only commands first; present any mutating command with blast radius and rollback before running it."
-    planner: "Do this in **Plan mode**; do not switch to Act."
+    developer: "Delegate to `subagent_developer` from **Act mode** with a self-contained brief (approvals and the guard hook apply); on the legacy build do the work in Act mode yourself."
+    sre: "Delegate to `subagent_sre` from **Act mode**: read-only commands first; any mutating command is presented with blast radius and rollback before it runs. On the legacy build diagnose in Act mode yourself."
+    planner: "Use `subagent_planner` if available (next build/CLI); otherwise plan in **Plan mode**. Do not implement."
     explorer: "Use `subagent_explorer` if available (next build/CLI); otherwise answer in Plan mode."
     reviewer: "Pass the diff to `subagent_reviewer` if available (next build/CLI); otherwise review in Plan mode."
     architect: "Use `subagent_architect` for the analysis if available; write any files in Act mode."

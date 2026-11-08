@@ -7,4 +7,4 @@ Create an architecture diagram for: the target Murpheux gave with the command
 
 ## Steps
 
-1. Do the work in **Act mode** (approvals and the guard hook apply).
+1. Delegate to `subagent_developer` from **Act mode** with a self-contained brief (approvals and the guard hook apply); on the legacy build do the work in Act mode yourself.

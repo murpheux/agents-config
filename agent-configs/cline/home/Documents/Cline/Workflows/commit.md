@@ -9,4 +9,4 @@ Prepare a commit for the STAGED changes only. Extra guidance: the target Murpheu
 ## Steps
 
 1. Run this read-only command with `execute_command` and use its output: `ggshield secret scan pre-commit 2>&1 | tail -n 20; git --no-pager diff --cached --stat && git --no-pager diff --cached`
-2. Do the work in **Act mode** (approvals and the guard hook apply).
+2. Delegate to `subagent_developer` from **Act mode** with a self-contained brief (approvals and the guard hook apply); on the legacy build do the work in Act mode yourself.

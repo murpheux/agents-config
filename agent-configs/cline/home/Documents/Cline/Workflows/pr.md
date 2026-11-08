@@ -6,4 +6,4 @@ Output a Conventional-Commit style title and a body with: Summary, Changes, Test
 ## Steps
 
 1. Run this read-only command with `execute_command` and use its output: `git --no-pager log --oneline origin/main..HEAD 2>/dev/null || git --no-pager log --oneline -15; git --no-pager diff --stat origin/main...HEAD 2>/dev/null`
-2. Do the work in **Act mode** (approvals and the guard hook apply).
+2. Delegate to `subagent_developer` from **Act mode** with a self-contained brief (approvals and the guard hook apply); on the legacy build do the work in Act mode yourself.

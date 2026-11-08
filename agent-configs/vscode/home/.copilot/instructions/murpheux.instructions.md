@@ -427,18 +427,18 @@ Always ask before executing any of the following, regardless of context (the wor
 
 ## 14. Agent Team & Cost Discipline
 
-**Copilot CLI** (`copilot --agent router`, alias `cop`) — custom agents in `~/.copilot/agents/*.agent.md` (`target: github-copilot`), models/effort in `settings.json` → `subagents.agents`:
+**Copilot CLI** (`copilot --agent router`, alias `cop`) — custom agents in `~/.copilot/agents/*.agent.md` (`target: github-copilot`), models/effort in `settings.json` → `subagents.agents`; every model is an **Agentgateway** model ID (BYOK — the `cop*` aliases point Copilot at `https://scarlet:9443/v1`):
 
 | Agent | Model · effort | Tools |
 |---|---|---|
-| `router` | `gpt-5-mini` | agent, read, search, web, todo (no edit/shell) |
-| `explorer` | `gpt-5-mini` · low | read, search, web |
-| `reviewer` | `claude-haiku-4.5` · medium | read, search, execute |
-| `planner` | `gpt-5.5` · medium | read, search, web, agent |
+| `router` | `deepseek-flash` | agent, read, search, web, todo (no edit/shell) |
+| `explorer` | `deepseek-flash` · low | read, search, web |
+| `reviewer` | `deepseek-flash` · medium | read, search, execute |
+| `planner` | `openrouter/openai/gpt-6-sol` · medium | read, search, web, agent |
 | `developer` | `claude-sonnet-5` · medium | all |
 | `sre` | `claude-sonnet-5` · medium | execute, read, search, web, agent |
-| `architect` | `gpt-5.5` · high | read, search, web, edit, agent |
-| `security` | `claude-opus-4.8` · high | read, search, execute, web |
+| `architect` | `openrouter/openai/gpt-6-sol` · high | read, search, web, edit, agent |
+| `security` | `openrouter/anthropic/claude-opus-5-5` · high | read, search, execute, web |
 
 **VS Code** (agent picker → **Router**) — agents `~/.copilot/agents/vscode-*.agent.md` (`target: vscode`): Router (Claude Sonnet 5) runs Explorer/Reviewer (GPT-6 Luna), Planner (GPT-6 Sol), Developer/SRE (Claude Sonnet 5) as subagents; Architect and Security (Claude Opus 5.5) are **handoffs**, because VS Code refuses subagents priced above the caller.
 

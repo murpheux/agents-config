@@ -2,8 +2,8 @@
 name: architect
 description: Read-only solution/cloud architecture and hard root-cause analysis; returns decisions, trade-offs and a hand-off plan.
 tools: read_files, search_codebase, fetch_web_content
-providerId: openrouter
-modelId: openai/gpt-6-sol
+providerId: openai-compatible
+modelId: openrouter/openai/gpt-6-sol
 maxIterations: 25
 ---
 

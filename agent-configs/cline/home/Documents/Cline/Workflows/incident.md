@@ -5,4 +5,4 @@ Follow observe → hypothesise → mitigate. Do not change anything without pres
 
 ## Steps
 
-1. Diagnose in **Act mode** with read-only commands first; present any mutating command with blast radius and rollback before running it.
+1. Delegate to `subagent_sre` from **Act mode**: read-only commands first; any mutating command is presented with blast radius and rollback before it runs. On the legacy build diagnose in Act mode yourself.

@@ -26,6 +26,14 @@ if [[ "$DRY_RUN" != 1 ]]; then
     | "$DOCS/Cline/Hooks/PreToolUse" | grep -q '"cancel": true' && log "hook blocks force-push ✔" || die "hook smoke test failed"
 fi
 
+# Provider: openai-compatible → Agentgateway, key-free (OPENAI_API_KEY from op run / your shell).
+# Shared by the Cline CLI and the extension's `next` build (both use ~/.cline/data).
+GATEWAY_URL="https://scarlet:9443/v1"
+for f in models.json providers.json; do backup_path cline "$HOME/.cline/data/settings/$f"; done
+if [[ "$DRY_RUN" == 1 ]]; then python3 "$HERE/lib/configure-gateway-provider.py" "$HOME/.cline/data" --dry-run
+else python3 "$HERE/lib/configure-gateway-provider.py" "$HOME/.cline/data" && log "Cline provider configured"; fi
+
+need cline   "Cline CLI (npm i -g cline)"
 need python3 "required by the guard hook"
 need op      "1Password CLI — MCP servers and providers get credentials via op run"
 need docker  "github + terraform MCP servers"
@@ -35,9 +43,12 @@ cat <<EOF
 
 Next steps (in the Cline panel → Settings; these live in extension state, not files)
   1. Pin the build: add templates/vscode-settings.fragment.json to VS Code user settings ("cline.rollout.bundleOverride": "next").
-  2. Providers: Plan = OpenRouter openai/gpt-6-sol (reasoning high); Act = LiteLLM https://scarlet:9443/v1 claude-sonnet-5 (medium).
-     Enable "Use different models for Plan and Act". Leave API keys empty — launch with:
-       op run --env-file ~/.cline/cline.op.env -- code .
+  2. Provider is OpenAI Compatible → Agentgateway ($GATEWAY_URL), model claude-sonnet-5 (all ids are gateway ids;
+     /model openrouter/openai/gpt-6-sol for planning). Leave the API key empty — it comes from OPENAI_API_KEY:
+       add to ~/.zshrc:  source ~/.cline/cline-aliases.sh
+       CLI:      cline …          (wrapper: fetches the key, keeps the TTY; "op run -- cline" cannot, it pipes stdout)
+       VS Code:  cline-code .     (= op run --env-file ~/.cline/cline.op.env -- code .)
+     Smoke test:  cline -P openai-compatible -m deepseek-flash --auto-approve false "Reply with: ok"
   3. Auto-approve: Read ✔, Edit ✗, Execute commands ✗, Browser ✗, MCP ✔ (read-only servers). Hooks: enabled. Auto-condense: on.
   4. Per repo: copy templates/.clineignore (legacy build) and add project rules under .clinerules/.
 EOF

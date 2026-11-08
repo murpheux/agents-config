@@ -2,8 +2,8 @@
 name: security
 description: 'Read-only security review: threat models, IAM, secrets, supply chain, OWASP; independent reviewer for HIGH_RISK changes.'
 tools: read_files, search_codebase, fetch_web_content
-providerId: openrouter
-modelId: anthropic/claude-opus-5.5
+providerId: openai-compatible
+modelId: openrouter/anthropic/claude-opus-5-5
 maxIterations: 25
 ---
 

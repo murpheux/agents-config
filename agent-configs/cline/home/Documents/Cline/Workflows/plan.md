@@ -6,4 +6,4 @@ Use the planner output format (Objective, Context, Assumptions, Plan, Decisions,
 ## Steps
 
 1. Run this read-only command with `execute_command` and use its output: `git --no-pager log --oneline -10 2>/dev/null; git status --short 2>/dev/null | head -n 30`
-2. Do this in **Plan mode**; do not switch to Act.
+2. Use `subagent_planner` if available (next build/CLI); otherwise plan in **Plan mode**. Do not implement.

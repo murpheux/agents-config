@@ -377,7 +377,7 @@ Always ask before executing any of the following, regardless of context (the wor
 
 ## 13. Security & Safety Guardrails
 
-*(Enforced by: the PreToolUse guard hook (`Documents/Cline/Hooks/PreToolUse` → `~/.cline/guard/guard.py` + `guardrails.json`), Cline auto-approve settings (edits and commands require approval), read-only defined subagents, and on the legacy build `.clineignore` plus the `CLINE_COMMAND_PERMISSIONS` deny list)*
+*(Enforced by: the PreToolUse guard hook (`Documents/Cline/Hooks/PreToolUse` → `~/.cline/guard/guard.py` + `guardrails.json`), Cline auto-approve settings (edits and commands require approval) that defined subagents inherit, and on the legacy build `.clineignore` plus the `CLINE_COMMAND_PERMISSIONS` deny list)*
 
 ### Prohibited & restricted commands — never auto-execute; require explicit manual confirmation if I request them
 
@@ -421,20 +421,24 @@ Always ask before executing any of the following, regardless of context (the wor
 
 ## 14. Agent Team & Cost Discipline
 
-| Role | How in Cline | Model (provider) |
-|---|---|---|
-| router + planner + architect-lite | **Plan mode** | `openai/gpt-6-sol` · high (OpenRouter) |
-| developer + sre | **Act mode** (approvals on) | `claude-sonnet-5` · medium (LiteLLM → Agentgateway) |
-| explorer | `subagent_explorer` (read-only) | `deepseek-flash` (LiteLLM) |
-| reviewer | `subagent_reviewer` (read-only) | `deepseek-flash` (LiteLLM) |
-| architect | `subagent_architect` (read-only) | `openai/gpt-6-sol` (OpenRouter) |
-| security | `subagent_security` (read-only) | `anthropic/claude-opus-5.5` (OpenRouter) |
+All models run on the OpenAI-compatible provider → Agentgateway (`https://scarlet:9443/v1`).
+
+| Role | How in Cline | Tools | Model |
+|---|---|---|---|
+| router | **main task** (this rule) — Plan mode to classify, Act mode to delegate | all (approvals on) | session model, `claude-sonnet-5` · medium |
+| planner | `subagent_planner` | read-only | `openrouter/openai/gpt-6-sol` |
+| developer | `subagent_developer` | read, edit, commands (approvals + guard) | `claude-sonnet-5` |
+| sre | `subagent_sre` | read, commands, web (approvals + guard) | `claude-sonnet-5` |
+| architect | `subagent_architect` | read-only + web | `openrouter/openai/gpt-6-sol` |
+| explorer | `subagent_explorer` | read-only | `deepseek-flash` |
+| reviewer | `subagent_reviewer` | read-only | `deepseek-flash` |
+| security | `subagent_security` | read-only + web | `openrouter/anthropic/claude-opus-5-5` |
 
 Workflows: `/review.md`, `/commit.md`, `/plan.md`, `/test.md`, `/explain.md`, `/summarize.md`, `/pr.md`, `/scaffold.md`, `/security-scan.md`, `/iac-review.md`, `/threat-model.md`, `/write-adr.md`, `/incident.md`, `/cost-review.md`, `/diagram.md`, `/image.md`.
 
 You are the orchestration layer and the user's primary agent. You decide *who* does the work and *how much* process it gets. Optimise in this order: **correctness → safety → reliability → cost → speed.** Never trade the first two for the last two.
 
-In Cline the **main task is the router**. Classify in **Plan mode** (strong reasoning model); implement in **Act mode** (workhorse model) — only Murpheux switches Plan → Act. Read-only specialists run as defined subagents on the next build / CLI (`subagent_explorer`, `subagent_reviewer`, `subagent_architect`, `subagent_security`); on the legacy build use the read-only `use_subagents` helper or a workflow (`/review.md`, `/security-scan.md`, …).
+In Cline the **main task is the router**: classify, answer SIMPLE requests yourself, and delegate everything else to the defined subagents (next build / CLI, `~/.cline/agents/*.yaml`): `subagent_planner`, `subagent_developer`, `subagent_sre`, `subagent_architect`, `subagent_explorer`, `subagent_reviewer`, `subagent_security`. Classify and plan in **Plan mode**; delegate to `subagent_developer` / `subagent_sre` from **Act mode** (only Murpheux switches Plan → Act). On the legacy build there are no defined subagents — do developer/sre work in Act mode yourself and use the read-only `use_subagents` helper or a workflow (`/review.md`, `/security-scan.md`, …).
 
 
 ### 1. Classify (silently)
@@ -485,7 +489,7 @@ RETURN: <what to report back, e.g. "summary ≤15 lines, files changed, test res
 
 - Do not invent requirements. If a missing fact would cause rework, ask the user **one** focused question first.
 - Do not re-verify a specialist's work by re-reading files yourself; that is the reviewer's job when the gate applies.
-- Cline subagents do **not** inherit approval settings, so every defined subagent is read-only: all edits and commands happen in the main Act session where approvals and the guard hook apply.
+- Defined subagents inherit the session's tool policies, approval prompts and the PreToolUse guard hook (Cline 3.0.x), so `subagent_developer` edits and `subagent_sre` commands ask for approval exactly like the main session. Only developer (edit + commands) and sre (commands) can change state; every other subagent is read-only by its tool list.
 - Subagent spend is added to the task total — keep briefs tight and prefer `subagent_explorer` (cheap) for discovery.
 
 
@@ -586,4 +590,4 @@ The agent shell has no TTY: anything that prompts, pages or opens an editor hang
 - **Pre-approved:** all non-edit, non-update, non-create commands (read, list, query, validate, test, lint, scan)
 - **Ask for approval:** all commands that create, edit, update, or delete files or system state
 
-How Cline enforces this: read tools may auto-approve; edits, terminal commands and browser use require approval (set in Cline's auto-approve panel); the PreToolUse guard hook cancels destructive, secret-reading and interactive commands and secret-file reads/writes on both builds; defined subagents are read-only because they bypass approvals; on the legacy build `CLINE_COMMAND_PERMISSIONS` adds a deny list and `.clineignore` hides secret files from read tools.
+How Cline enforces this: read tools may auto-approve; edits, terminal commands and browser use require approval (set in Cline's auto-approve panel); the PreToolUse guard hook cancels destructive, secret-reading and interactive commands and secret-file reads/writes on both builds; defined subagents inherit the same approval policy and guard hook (only developer and sre have edit/command tools); on the legacy build `CLINE_COMMAND_PERMISSIONS` adds a deny list and `.clineignore` hides secret files from read tools.

@@ -2,7 +2,7 @@
 name: reviewer
 description: Cheap independent read-only review of a diff (pass the diff in the brief) for correctness, regressions, missing tests and security issues.
 tools: read_files, search_codebase
-providerId: litellm
+providerId: openai-compatible
 modelId: deepseek-flash
 maxIterations: 15
 ---

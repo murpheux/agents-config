@@ -24,6 +24,16 @@ while IFS= read -r -d '' s; do
 done < <(find "$HERE/home/.copilot/skills" -mindepth 1 -maxdepth 1 -type d -print0)
 
 run chmod +x "$C/hooks/guard.py"
+
+# Copilot's Node ignores the macOS keychain: export the OS trust store (incl. home-lab CA) for
+# NODE_EXTRA_CA_CERTS (set by the cop* aliases) and verify it against the gateway.
+if [[ "$DRY_RUN" == 1 ]]; then echo "DRY: node lib/build-ca-bundle.mjs $C/ca-bundle.pem"
+elif command -v node >/dev/null; then
+  node "$HERE/lib/build-ca-bundle.mjs" "$C/ca-bundle.pem" || die "CA bundle does not verify scarlet:9443 — is the home-lab CA trusted in the keychain?"
+else
+  die "node >= 22.15 is required to export the OS trust store (the cop* aliases use $C/ca-bundle.pem)"
+fi
+
 if [[ "$DRY_RUN" != 1 ]]; then
   backup_path copilot-cli "$C/settings.json"
   python3 "$HERE/lib/merge_json.py" "$C/settings.json" "$HERE/home/.copilot/settings.fragment.jsonc"
@@ -47,6 +57,9 @@ cat <<'EOF'
 
 Next steps
   1. Add to ~/.zshrc:  source ~/.copilot/copilot-aliases.sh      then start with:  cop
+     The cop* aliases run Copilot against Agentgateway (BYOK). Plain `copilot` uses whatever COPILOT_PROVIDER_*
+     your shell exports — if you keep those, COPILOT_PROVIDER_BASE_URL must end in /v1 (https://scarlet:9443/v1).
+     Smoke test:  cop-cheap -p "Reply with: ok"
   2. Inside the CLI check:  /env  (instructions, agents, skills, hooks, MCP)   /subagents   /usage
   3. Optional hard policy:  ./install.sh --managed   (deny/ask/allow rules the model cannot bypass)
 EOF

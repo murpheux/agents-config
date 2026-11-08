@@ -16,16 +16,18 @@ show-model-warnings: true
 alias:
   - "cheap:openai/deepseek-flash"
   - "dev:openai/claude-sonnet-5"
-  - "arch:openrouter/openai/gpt-6-sol"
-  - "sec:openrouter/anthropic/claude-opus-5.5"
+  - "arch:openai/openrouter/openai/gpt-6-sol"          # gateway passthrough to OpenRouter
+  - "sec:openai/openrouter/anthropic/claude-opus-5-5"  # gateway passthrough to OpenRouter
 auto-accept-architect: false                  # review the architect's plan before the editor applies it
 
 # ── Gateway / TLS (keys are injected by `op run`, never stored here) ──────────────────
+# Every model goes through Agentgateway: `openai/<id>` = gateway model <id>; arch/sec use the gateway's
+# openrouter/* passthrough, so only the gateway key is needed.
 openai-api-base: https://scarlet:9443/v1
 verify-ssl: true
 set-env:
-  - SSL_CERT_FILE=__CA_BUNDLE__               # full system bundle incl. the home-lab CA (not the CA alone)
-  - REQUESTS_CA_BUNDLE=__CA_BUNDLE__
+  - SSL_CERT_FILE=__HOME__/.aider/ca-bundle.pem       # OS trust store incl. home-lab CA (install.sh builds it)
+  - REQUESTS_CA_BUNDLE=__HOME__/.aider/ca-bundle.pem
   - NO_PROXY=scarlet,localhost,127.0.0.1
 timeout: 600
 model-settings-file: __HOME__/.aider/model.settings.yml

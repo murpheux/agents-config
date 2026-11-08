@@ -2,7 +2,7 @@
 name: explorer
 description: Cheap read-only codebase/doc research; returns file paths and findings.
 tools: read_files, search_codebase
-providerId: litellm
+providerId: openai-compatible
 modelId: deepseek-flash
 maxIterations: 15
 ---

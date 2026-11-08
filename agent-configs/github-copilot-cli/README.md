@@ -21,15 +21,15 @@ github-copilot-cli/
 
 | Agent | Model · effort | Tools |
 |---|---|---|
-| router (`cop`) | gpt-5-mini | agent, read, search, web, todo — cannot edit or run shell |
-| explorer / built-in explore, task | gpt-5-mini · low | read-only / builds & tests |
-| reviewer / built-in code-review | claude-haiku-4.5 · medium | read, search, execute |
-| planner | gpt-5.5 · medium | read-only + agent |
+| router (`cop`) | deepseek-flash | agent, read, search, web, todo — cannot edit or run shell |
+| explorer / built-in explore, task | deepseek-flash · low | read-only / builds & tests |
+| reviewer / built-in code-review | deepseek-flash · medium | read, search, execute |
+| planner | openrouter/openai/gpt-6-sol · medium | read-only + agent |
 | developer, sre, general-purpose | claude-sonnet-5 · medium | all / ops |
-| architect | gpt-5.5 · high | read + docs edits |
-| security | claude-opus-4.8 · high | read + scanners |
+| architect | openrouter/openai/gpt-6-sol · high | read + docs edits |
+| security | openrouter/anthropic/claude-opus-5-5 · high | read + scanners |
 
-Spend visibility: footer shows AI credits used, context and agent; `/usage`, `/context`; `cop-cap` sets `--max-ai-credits`. Model ids follow `copilot help config` on v1.0.61 — adjust in `settings.json` as the catalog changes (the model picker shows per-token prices).
+Spend visibility: footer shows AI credits used, context and agent; `/usage`, `/context`; `cop-cap` sets `--max-ai-credits`. All ids are **Agentgateway** model IDs: the `cop*` aliases run Copilot in BYOK mode against `https://scarlet:9443/v1` (OpenAI chat completions), so GitHub's model catalog and AI credits don't apply. One provider serves every agent — each id must exist on the gateway (planner/architect/security use its `openrouter/*` passthrough). TLS: the aliases point `NODE_EXTRA_CA_CERTS` at `~/.copilot/ca-bundle.pem` (OS trust store incl. the home-lab CA, built by `install.sh`).
 
 ## Guardrails
 

@@ -1,5 +1,8 @@
 // ~/.copilot/settings.json FRAGMENT — merged (not replaced) by install.sh / install.ps1.
 // Keys verified against `copilot help config` (v1.0.61) and the CLI configuration-directory reference.
+// Models are Agentgateway model IDs: BYOK (COPILOT_PROVIDER_*) is set per invocation by the cop* aliases in
+// copilot-aliases.sh — settings.json has no provider keys. One provider serves every agent, so every id here
+// must exist on the gateway; planner/architect/security use its openrouter/* passthrough.
 {
   "model": "claude-sonnet-5",
   "effortLevel": "medium",
@@ -7,17 +10,17 @@
   // Per-agent model tiers (custom agents + cheap built-ins). Router's own model is in router.agent.md.
   "subagents": {
     "agents": {
-      "explorer":        { "model": "gpt-5-mini",       "effortLevel": "low" },
-      "reviewer":        { "model": "claude-haiku-4.5", "effortLevel": "medium" },
-      "planner":         { "model": "gpt-5.5",          "effortLevel": "medium" },
-      "developer":       { "model": "claude-sonnet-5",  "effortLevel": "medium" },
-      "sre":             { "model": "claude-sonnet-5",  "effortLevel": "medium" },
-      "architect":       { "model": "gpt-5.5",          "effortLevel": "high" },
-      "security":        { "model": "claude-opus-4.8",  "effortLevel": "high" },
-      "explore":         { "model": "gpt-5-mini",       "effortLevel": "low" },
-      "task":            { "model": "gpt-5-mini",       "effortLevel": "low" },
-      "code-review":     { "model": "claude-haiku-4.5", "effortLevel": "medium" },
-      "general-purpose": { "model": "claude-sonnet-5",  "effortLevel": "medium" }
+      "explorer":        { "model": "deepseek-flash",                      "effortLevel": "low" },
+      "reviewer":        { "model": "deepseek-flash",                      "effortLevel": "medium" },
+      "planner":         { "model": "openrouter/openai/gpt-6-sol",         "effortLevel": "medium" },
+      "developer":       { "model": "claude-sonnet-5",                     "effortLevel": "medium" },
+      "sre":             { "model": "claude-sonnet-5",                     "effortLevel": "medium" },
+      "architect":       { "model": "openrouter/openai/gpt-6-sol",         "effortLevel": "high" },
+      "security":        { "model": "openrouter/anthropic/claude-opus-5-5", "effortLevel": "high" },
+      "explore":         { "model": "deepseek-flash",                      "effortLevel": "low" },
+      "task":            { "model": "deepseek-flash",                      "effortLevel": "low" },
+      "code-review":     { "model": "deepseek-flash",                      "effortLevel": "medium" },
+      "general-purpose": { "model": "claude-sonnet-5",                     "effortLevel": "medium" }
     },
     "maxConcurrency": 4,
     "maxDepth": 2

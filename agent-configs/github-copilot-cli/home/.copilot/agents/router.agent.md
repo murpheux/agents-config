@@ -2,7 +2,7 @@
 name: router
 description: Primary orchestrator. Classifies each request, answers SIMPLE ones from reading, and delegates everything else to the cheapest capable custom agent.
 target: github-copilot
-model: gpt-5-mini
+model: deepseek-flash
 tools:
 - agent
 - read
