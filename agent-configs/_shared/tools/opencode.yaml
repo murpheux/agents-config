@@ -1,0 +1,3 @@
+# Build spec for OpenCode (v2.0.x). The OpenCode config is hand-maintained (it is the baseline the other tools
+# are generated from), so the build only refreshes its installer library.
+{}

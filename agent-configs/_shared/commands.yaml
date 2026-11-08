@@ -1,0 +1,149 @@
+# Shared slash-command / workflow definitions. Rendered per tool by build.py:
+#   Claude Code → ~/.claude/commands/<id>.md        VS Code → <profile>/prompts/<id>.prompt.md
+#   Cline      → Workflows/<id>.md                  Codex   → skills (commands were removed in 0.118)
+#   Copilot CLI→ skills                             Aider   → /load .cmds (hand-written subset)
+# Fields: description, role (agent that should do the work), args (hint), context (read-only shell
+# command whose output helps; tools that support injection run it, others instruct the agent), body.
+commands:
+  review:
+    description: Cheap independent review of uncommitted changes (or a named target)
+    role: reviewer
+    args: "[focus or path]"
+    context: "git status --short && git --no-pager diff --stat HEAD && git --no-pager diff HEAD"
+    body: |
+      Review the current changes for correctness, regressions, missing tests and security issues. Focus: {{ARGS}}
+      Return "Verdict: PASS | PASS WITH WARNINGS | FAIL | ESCALATE" and findings as "[SEVERITY] path:line — problem → impact → fix" (max 10, no style nits).
+
+  commit:
+    description: Secret-scan staged changes, then propose and create a signed conventional commit
+    role: developer
+    cheap: true
+    args: "[extra guidance]"
+    context: "ggshield secret scan pre-commit 2>&1 | tail -n 20; git --no-pager diff --cached --stat && git --no-pager diff --cached"
+    body: |
+      Prepare a commit for the STAGED changes only. Extra guidance: {{ARGS}}
+      1. If the secret scan reports any finding, STOP and report it (location + type, never the value). Do not commit.
+      2. If nothing is staged, say so and stop.
+      3. Write a Conventional Commit message (`type(scope): summary` ≤ 72 chars, blank line, short body explaining why).
+      4. Run `git commit -S -m "<subject>" -m "<body>"` (requires approval). Never push.
+
+  plan:
+    description: Produce an implementation plan only (no changes)
+    role: planner
+    args: "<what to plan>"
+    context: "git --no-pager log --oneline -10 2>/dev/null; git status --short 2>/dev/null | head -n 30"
+    body: |
+      Create an implementation plan for: {{ARGS}}
+      Use the planner output format (Objective, Context, Assumptions, Plan, Decisions, Risks, Specialist, Verification, Escalate if). Do not edit files.
+
+  test:
+    description: Run the project's build/lint/tests and fix failures
+    role: developer
+    args: "[scope]"
+    body: |
+      Run the relevant build, lint and test commands for this repository (Makefile/Taskfile targets first), then fix the failures. Scope: {{ARGS}}
+      Stop after two unsuccessful fix attempts on the same failure and report the evidence.
+
+  explain:
+    description: Explain code, a file, a command or an error cheaply (read-only)
+    role: explorer
+    cheap: true
+    args: "<code, file, command or error>"
+    body: |
+      Explain clearly and concisely for a senior engineer (no basics): {{ARGS}}
+      Cover what it does, how data/control flows, non-obvious edge cases and any risks. Cite file paths and lines.
+
+  summarize:
+    description: Brief overview of the current project (cheap)
+    role: explorer
+    cheap: true
+    args: ""
+    context: "git ls-files 2>/dev/null | head -n 150"
+    body: |
+      Give a brief overview of this project: what it is, main files and folders, how to build/test/run it, and what it seems to be for. ≤ 25 lines.
+
+  pr:
+    description: Draft a pull request title and description from the current branch
+    role: developer
+    cheap: true
+    args: "[base branch, extra context]"
+    context: "git --no-pager log --oneline origin/main..HEAD 2>/dev/null || git --no-pager log --oneline -15; git --no-pager diff --stat origin/main...HEAD 2>/dev/null"
+    body: |
+      Draft a PR for the current branch against `main` (or the base branch named here). Extra context: {{ARGS}}
+      Output a Conventional-Commit style title and a body with: Summary, Changes, Testing, Risk & rollback, Security notes. Then show the exact `gh pr create --title … --body-file -` command, but do not run it unless asked.
+
+  scaffold:
+    description: Scaffold a new repo/project following Murpheux's conventions
+    role: developer
+    args: "<project description>"
+    body: |
+      Scaffold a new project: {{ARGS}}
+      Follow the global conventions: README.md, LICENSE (MIT unless told otherwise), .gitignore for the stack, Makefile with lint/test/build/deploy, src/ or cmd/, tests/, scripts/, docs/, .github/workflows/ci.yml (lint + test, actions pinned to SHAs, minimal permissions), .env.example if configuration is needed. Load the matching language skill first. Validate that `make lint test` passes before reporting.
+
+  security-scan:
+    description: Security review of the repo or a path — secrets, dependencies, IaC, containers, code (OWASP)
+    role: security
+    args: "[path, default whole repo]"
+    context: "git ls-files | head -n 200"
+    body: |
+      Perform a security review. Target (default: the whole repository): {{ARGS}}
+      Run the scanners that apply to the stack (ggshield/gitleaks, trivy fs/config, semgrep, checkov, govulncheck, npm audit, pip-audit, dotnet list package --vulnerable), then review the highest-risk code paths manually (authn/authz, input handling, IAM, network exposure, secrets handling). Return the findings table ranked by severity then confidence.
+
+  iac-review:
+    description: Review Terraform/OpenTofu, Ansible, Docker/Compose or Kubernetes for security, reliability and cost
+    role: security
+    args: "[path, default whole repo]"
+    context: "git ls-files | grep -E '\\.(tf|hcl|ya?ml)$|Dockerfile|compose' | head -n 150"
+    body: |
+      Review the infrastructure-as-code. Target (default: the whole repository): {{ARGS}}
+      Run terraform fmt -check / validate / tflint, trivy config, checkov, ansible-lint and hadolint as applicable. Check least-privilege IAM, encryption at rest/in transit, public exposure, state backend security (encryption + locking), pinned versions, tagging and obvious cost waste. Return the findings table.
+
+  threat-model:
+    description: STRIDE threat model for a system, feature or diagram
+    role: security
+    args: "<system or feature>"
+    body: |
+      Load the `threat-modeling` skill and produce a threat model for: {{ARGS}}
+      Identify assets, trust boundaries and data flows first (Mermaid DFD), then threats per STRIDE, then mitigations prioritised by risk.
+
+  write-adr:
+    description: Write an Architecture Decision Record for a decision
+    role: architect
+    args: "<decision>"
+    body: |
+      Load the `adr` skill. Write an ADR for this decision: {{ARGS}}
+      Inspect existing ADRs first (docs/adr/, docs/decisions/) to continue their numbering and format. Save the ADR (requires approval) and return its path plus a 3-line summary.
+
+  incident:
+    description: Incident triage for a failing service/host (Swarm, K8s, cloud) — read-only first
+    role: sre
+    args: "<symptom / service>"
+    body: |
+      Load the `incident-response` skill. Triage this incident: {{ARGS}}
+      Follow observe → hypothesise → mitigate. Do not change anything without presenting the exact command, blast radius and rollback first.
+
+  cost-review:
+    description: Cloud cost optimisation review of IaC or an architecture
+    role: architect
+    args: "[target, default this repo's infrastructure]"
+    body: |
+      Review for cost optimisation. Target (default: the infrastructure in this repository): {{ARGS}}
+      Identify the main cost drivers, then recommend concrete savings (right-sizing, Graviton/ARM, Savings Plans/Reserved/Spot, storage tiers and lifecycle, NAT/egress reduction, idle resources, log retention, autoscaling floors). For each: estimated monthly impact in C$ (state assumptions), effort and risk. No file changes.
+
+  diagram:
+    description: Create an architecture diagram (draw.io, Mermaid, C4, Python diagrams, D2) and render it
+    role: developer
+    args: "<what to diagram, optional format>"
+    body: |
+      Create an architecture diagram for: {{ARGS}}
+      1. Load the `architecture-diagrams` skill and choose the format (use the `drawio-diagrams` skill for draw.io/diagrams.net or vendor icons with manual layout; Mermaid if it lives in Markdown).
+      2. Derive components and flows from the repository (IaC, compose/stack files, k8s manifests, code) or the description — don't invent components; list assumptions.
+      3. Save the source under docs/diagrams/ (kebab-case), validate it, render SVG (and PNG if useful), and return the paths plus a short legend.
+
+  image:
+    description: Generate an image — SVG/chart/processed image, or one AI-generated draft via the gateway
+    role: developer
+    args: "<image description>"
+    body: |
+      Load the `image-generation` skill and produce this image: {{ARGS}}
+      Use a deterministic method (SVG, chart, Pillow/ImageMagick) when it can satisfy the request; use AI generation only for photographic/illustrative content. For AI generation: write the prompt, generate a single standard-quality draft into docs/img/ (requires approval), and report the path, prompt and model. Never print or embed the API key.

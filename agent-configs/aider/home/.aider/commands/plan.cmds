@@ -1,0 +1,4 @@
+# /load ~/.aider/commands/plan.cmds — produce a plan only, no edits (architect-grade model in ask mode).
+/chat-mode ask
+/model arch
+/ask Act as the planner from CONVENTIONS.md. Produce the smallest executable plan (≤ 40 lines) using the sections: Objective, Context, Assumptions, Plan (files per step), Decisions (REQUIRED vs OPTIONAL), Risks, Specialist, Verification (exact commands), Escalate if. Do not edit files. Then switch back with /model dev before implementing.

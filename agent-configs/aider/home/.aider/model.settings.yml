@@ -1,0 +1,55 @@
+# ~/.aider/model.settings.yml — per-model behaviour (Aider v0.86.x ModelSettings schema).
+# An entry with the same name as a built-in REPLACES it; unknown keys make the file fail to load.
+# Reasoning effort / thinking tokens are passed through extra_params by Aider itself (accepts_settings).
+
+- name: aider/extra_params                     # merged into every model
+  extra_params:
+    max_tokens: 32000
+
+- name: openai/claude-sonnet-5                 # workhorse / developer (Agentgateway)
+  edit_format: diff
+  use_repo_map: true
+  weak_model_name: openai/deepseek-flash
+  editor_model_name: openai/claude-sonnet-5
+  editor_edit_format: editor-diff
+  cache_control: true                          # required for cache-prompts
+  use_temperature: false
+  accepts_settings: [reasoning_effort, thinking_tokens]
+  extra_params:
+    max_tokens: 32000
+
+- name: openai/deepseek-flash                  # cheap: router / ask / review / weak model
+  edit_format: diff
+  use_repo_map: true
+  weak_model_name: openai/deepseek-flash
+  editor_model_name: openai/deepseek-flash
+  editor_edit_format: editor-diff
+  extra_params:
+    max_tokens: 8192
+
+- name: openrouter/openai/gpt-6-sol            # reasoning: architect mode planner
+  edit_format: diff
+  use_repo_map: true
+  weak_model_name: openai/deepseek-flash
+  editor_model_name: openai/claude-sonnet-5
+  editor_edit_format: editor-diff
+  use_temperature: false
+  accepts_settings: [reasoning_effort]
+  extra_params:
+    extra_body:
+      provider:
+        data_collection: deny                  # OpenRouter: only providers that don't train on prompts
+
+- name: openrouter/anthropic/claude-opus-5.5   # premium: security review (ask mode)
+  edit_format: diff
+  use_repo_map: true
+  weak_model_name: openai/deepseek-flash
+  editor_model_name: openai/claude-sonnet-5
+  editor_edit_format: editor-diff
+  cache_control: true
+  use_temperature: false
+  accepts_settings: [reasoning_effort, thinking_tokens]
+  extra_params:
+    extra_body:
+      provider:
+        data_collection: deny

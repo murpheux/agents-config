@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>GitHub Copilot CLI — configuration report</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="cover"><h1>GitHub Copilot CLI — Configuration Report</h1>
+<div class="sub">Prepared for <b>Murpheux</b> · 28 September 2026 · Verified against <b>Copilot CLI 1.0.61</b> (installed on this workstation)</div>
+<div class="sub">Folder: <code>~/agent-configs/github-copilot-cli/</code> → installs to <code>~/.copilot/</code> (shared with VS Code's Copilot harness)</div></div>
+
+<h2>1. Summary</h2>
+<p>The Copilot CLI has everything the design needs:</p>
+<ul><li><b>custom agents with tool restrictions</b>, so the router literally cannot edit or run shell;</li>
+<li><b>per-subagent model and effort tiers</b> (<code>subagents.agents</code>);</li>
+<li>personal instructions and skills;</li>
+<li><b>fail-closed preToolUse hooks</b>;</li>
+<li>a sandbox, and optional <b>managed deny/ask/allow rules</b>.</li></ul>
+<p>Because <code>~/.copilot</code> is also read by VS Code, instructions, skills and hooks are identical to the <code>vscode/</code> folder. Agents are target-scoped (<code>github-copilot</code>) so VS Code doesn't list them.</p>
+<div class="kpi"><div><b>8</b>custom agents</div><div><b>11</b>tiered subagents</div><div><b>33</b>skills</div><div><b>7</b>shell entry points</div><div><b>4</b>MCP + built-in GitHub</div></div>
+
+<h2>2. Sources used</h2>
+<ul><li>Local ground truth: <code>copilot help config|permissions|providers|environment|commands|billing|limits</code> and <code>copilot mcp|skill|plugin --help</code>.</li>
+<li><code>github/docs</code>: CLI configuration-directory reference, hooks reference, custom-agents configuration.</li>
+<li><b>github/awesome-copilot</b> and <b>awesome-copilot.github.com</b> (built into the CLI as a plugin marketplace).</li>
+<li class="small">The dedicated research agent stalled, so these primary sources were read directly instead.</li></ul>
+
+<h2>3. What was built</h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>settings.fragment.jsonc</code> → merged into <code>~/.copilot/settings.json</code></td><td>default model/effort; per-agent tiers for the 7 custom agents plus built-ins (explore, task, code-review, general-purpose); maxConcurrency 4 / maxDepth 2; sandbox with credential paths denied; <code>deniedUrls</code> exfiltration list; <code>remote: off</code>; <code>disableBypassPermissionsMode: allow-auto-only</code>; spend footer</td></tr>
+<tr><td><code>instructions/murpheux.instructions.md</code></td><td>global instructions (<code>applyTo: "**"</code>), loaded by the CLI and both VS Code harnesses</td></tr>
+<tr><td><code>agents/*.agent.md</code></td><td>router (gpt-5-mini; tools agent/read/search/web/todo), explorer, reviewer, planner, developer, sre, architect, security</td></tr>
+<tr><td><code>skills/</code></td><td>20 portable + 13 workflow skills (built-in <code>/review</code> <code>/plan</code> <code>/pr</code> used instead of duplicates)</td></tr>
+<tr><td><code>hooks/guard.json</code> + <code>guard.py</code></td><td><code>preToolUse</code> guard (bash and PowerShell variants); exit 2 denies, crashes fail closed</td></tr>
+<tr><td><code>mcp-config.json</code></td><td>context7, mslearn, awsdocs, terraform (GitHub MCP is built in)</td></tr>
+<tr><td><code>copilot-aliases.sh/.ps1</code></td><td><code>cop</code> (router), <code>cop-dev</code>, <code>cop-sre</code>, <code>cop-plan</code>, <code>cop-sec</code>, <code>cop-cheap</code>, <code>cop-cap</code> — all with <code>--secret-env-vars</code> and <code>--deny-tool shell(git push)</code></td></tr>
+<tr><td><code>managed/managed-settings.json</code></td><td>optional root-owned policy: deny/ask/allow rules the model can't bypass (<code>install.sh --managed</code>)</td></tr></table>
+
+<h2>4. Agent tiers</h2>
+<table><tr><th>Agent</th><th>Model · effort</th><th>Tools</th></tr>
+<tr><td>router</td><td>gpt-5-mini</td><td>agent, read, search, web, todo</td></tr>
+<tr><td>explorer · built-in explore/task</td><td>gpt-5-mini · low</td><td>read-only · builds/tests</td></tr>
+<tr><td>reviewer · built-in code-review</td><td>claude-haiku-4.5 · medium</td><td>read, search, execute</td></tr>
+<tr><td>planner</td><td>gpt-5.5 · medium</td><td>read-only + agent</td></tr>
+<tr><td>developer · sre · general-purpose</td><td>claude-sonnet-5 · medium</td><td>all · ops</td></tr>
+<tr><td>architect</td><td>gpt-5.5 · high</td><td>read + edit docs</td></tr>
+<tr><td>security</td><td>claude-opus-4.8 · high</td><td>read + scanners</td></tr></table>
+<p class="small">Model ids follow the v1.0.61 catalog (<code>copilot help config</code>); the picker shows per-token prices. Adjust them in one place, <code>subagents.agents</code>.</p>
+
+<h2>5. Cost levers</h2>
+<ul><li>A cheap router, plus cheap built-in explore/task/code-review, so the most frequent helper calls don't run on the default model.</li>
+<li>AI-credit visibility in the footer; <code>/usage</code> and <code>/context</code>; <code>cop-cap</code> sets <code>--max-ai-credits</code> (a soft cap, minimum 30).</li>
+<li><code>continueOnAutoMode: false</code>: no silent model switches.</li>
+<li>Autopilot is still capped by <code>--max-autopilot-continues</code> (default 5).</li></ul>
+
+<h2>6. Guardrails</h2>
+<ol><li><b>Tool restriction</b>: the router has no edit or execute tools.</li>
+<li><b>Guard hook</b>: the shared 33 command rules and 18 protected paths. The CLI treats hook crashes and non-zero exits as a deny (fail closed); timeouts fail open.</li>
+<li><b>Sandbox</b> (macOS/Linux): <code>~/.ssh</code>, <code>~/.aws</code>, <code>~/.gnupg</code>, <code>~/.config/op</code>, kube/docker configs and AI-tool credential files are denied. On Windows the installer drops <code>deniedPaths</code>, because that backend rejects them.</li>
+<li><b>Secrets</b>: <code>--secret-env-vars</code> strips and redacts gateway, API and cloud tokens; <code>deniedUrls</code> blocks paste and webhook exfiltration hosts.</li>
+<li><b>No bypass</b>: allow-all flags are refused, and <code>remote: off</code> keeps sessions local.</li>
+<li><b>Managed policy</b> (optional): real deny/ask/allow rules. Note that once any list is set, unmatched operations ask, which is why reads and read-only commands are allow-listed.</li></ol>
+
+<h2>7. From awesome-copilot</h2>
+<ul><li><b>Install</b> (built-in marketplace): <code>csharp-dotnet-development</code>, <code>aws-cloud-development</code>, <code>azure-cloud-development</code>, <code>devops-oncall</code>, <code>structured-autonomy</code> ("premium planning, thrifty implementation").</li>
+<li><b>Adopted natively</b>:
+  <ul><li><i>rug-orchestrator</i> (pure-coordinator router) → router agent;</li>
+  <li><i>tool-guardian</i> and <i>secrets-scanner</i> hooks → guard.py;</li>
+  <li><i>terraform-iac-reviewer</i> and <i>se-security-reviewer</i> → security agent and <code>iac-review</code>;</li>
+  <li><i>platform-sre-kubernetes</i> → sre;</li>
+  <li>draw.io, threat-model and ADR skills → shared skills.</li></ul></li>
+<li>Large always-on instructions (e.g. <code>security-and-owasp</code>, 1,088 lines) were kept as on-demand skills to avoid a per-request token cost.</li></ul>
+
+<h2>8. Gotchas handled</h2>
+<ul><li>User-level <code>settings.json</code> has no allow/deny arrays; only managed settings do. So persistent denial relies on hooks, the sandbox, aliases and the optional managed file.</li>
+<li>User settings moved from <code>config.json</code> to <code>settings.json</code> (JSONC). The installer <i>merges</i> rather than overwriting.</li>
+<li><code>~/.agents/skills</code> (Codex) is also read by the CLI, so the installer skips identical duplicates.</li>
+<li><code>--deny-tool shell(…)</code> matches first-level subcommands only for git/gh; everything else is covered by the hook.</li></ul>
+
+<h2>9. Validation</h2>
+<p>Configs parse. The guard's 70 self-tests passed, including CLI payloads (<code>toolName</code>/<code>toolArgs</code>) with deny → exit 2. The installer smoke test merged settings while keeping an existing key (<code>theme</code>) and installed 8 agents, 33 skills and the hook. Both <code>.ps1</code> scripts parse cleanly.</p>
+
+<h2>10. Install</h2>
+<pre>cd ~/agent-configs/github-copilot-cli &amp;&amp; DRY_RUN=1 ./install.sh &amp;&amp; ./install.sh     # macOS / WSL
+echo 'source ~/.copilot/copilot-aliases.sh' &gt;&gt; ~/.zshrc &amp;&amp; cop
+./install.sh --managed                                                            # optional hard policy (sudo)
+# Windows: copy the folder locally, then  pwsh -File install.ps1  (UNC scripts are blocked by RemoteSigned)</pre>
+</body></html>

@@ -1,0 +1,4 @@
+# /load ~/.aider/commands/review.cmds — cheap independent review of uncommitted changes (ask mode).
+/chat-mode ask
+/run git --no-pager diff --stat HEAD && git --no-pager diff HEAD
+/ask Act as the reviewer from CONVENTIONS.md: review the diff above for correctness, regressions, missing tests and security issues. Return "Verdict: PASS | PASS WITH WARNINGS | FAIL | ESCALATE" then findings as "[SEVERITY] path:line — problem → impact → fix" (max 10, no style nits).

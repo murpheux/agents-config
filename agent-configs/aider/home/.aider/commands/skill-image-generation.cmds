@@ -1,0 +1,2 @@
+# /load this file to add the 'image-generation' skill to the chat as read-only context
+/read-only ~/.aider/skills/image-generation/SKILL.md

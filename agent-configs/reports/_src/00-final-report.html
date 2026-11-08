@@ -1,0 +1,121 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Final report — AI coding agent configurations</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="cover"><h1>Final Report — One Design, Seven AI Coding Agents</h1>
+<div class="sub">Prepared for <b>Murpheux</b> · 28 September 2026 · Baseline: the OpenCode v2 configuration (<code>~/opencode/.config/opencode</code>)</div>
+<div class="sub">Deliverables: <code>~/agent-configs/</code> (6 tool folders + <code>_shared/</code> build system) · per-tool reports <code>reports/01–06-*.pdf</code></div></div>
+
+<h2>1. Executive summary</h2>
+<p>The cost-aware multi-agent configuration built for OpenCode was re-implemented <b>natively</b> for Claude Code, GitHub Copilot CLI, VS Code (Copilot Chat), Cline, OpenAI Codex CLI and Aider. Each tool has its own folder that mirrors its real home-directory layout, with an installer that backs up anything it replaces. Nothing was installed into live locations.</p>
+<p>All seven configurations are generated from <b>one source of truth</b>:</p>
+<ul><li>the OpenCode <code>AGENTS.md</code> (every fact preserved; 277 items checked in each of the six new instruction files);</li>
+<li>eight tool-neutral agent prompts;</li>
+<li>16 shared workflows;</li>
+<li>20 portable skills (Agent Skills spec);</li>
+<li>one guardrail rule set with a single guard hook that speaks five hook contracts.</li></ul>
+<p>Current config formats were confirmed for each tool (September 2026 versions), and ideas from each awesome list were adopted where they fit. Everything was validated offline:</p>
+<ul><li>parsers for every config format;</li>
+<li>Starlark rules executed with their examples;</li>
+<li>70 guard self-tests;</li>
+<li>34 installer smoke checks in throwaway homes;</li>
+<li>the Windows PowerShell hook run for real.</li></ul>
+<div class="kpi"><div><b>6</b>new tool configs</div><div><b>35</b>new agent definitions</div><div><b>81</b>workflows / commands</div><div><b>149</b>skill files</div><div><b>70 + 34</b>tests passing</div></div>
+
+<h2>2. Approach</h2>
+<ol><li><b>Research</b>: six parallel research agents read each tool's official sources on GitHub, because the corporate proxy blocks many AI vendor sites. Each also read its awesome list:
+  <ul><li>awesome-claude-code → Claude Code;</li>
+  <li>awesome-copilot and awesome-copilot.github.com → Copilot CLI and VS Code;</li>
+  <li>awesome-clinerules → Cline;</li>
+  <li>awesome-codex-cli → Codex;</li>
+  <li>Aider community resources (no list was provided).</li></ul>
+  The Copilot CLI agent stalled. It was replaced by the installed CLI's own help (v1.0.61) and the <code>github/docs</code> references.</li>
+<li><b>Shared layer</b>: <code>_shared/build.py</code> turns the OpenCode baseline into a placeholder template, portable skills, agent bodies and commands. It renders each tool from a small YAML spec and normalises line endings.</li>
+<li><b>Tool layer</b>: settings, providers, MCP, hooks and permissions were written per tool, using only keys confirmed for the current version.</li>
+<li><b>Verification</b>: <code>validate.py</code> and <code>install_smoke.sh</code>, a content-preservation check, and Windows tests.</li></ol>
+
+<h2>3. Per-tool overview</h2>
+<table><tr><th>Tool</th><th>Version</th><th>Installs to</th><th>Router mechanism</th><th>Agents · commands · skills</th></tr>
+<tr><td>OpenCode (baseline)</td><td>2.0.18</td><td><code>~/.config/opencode</code></td><td>primary <code>router</code> agent; edit/shell denied</td><td>7 · 16 · 20</td></tr>
+<tr><td>Claude Code</td><td>2.1.283</td><td><code>~/.claude</code></td><td><code>"agent": "router"</code> main session on Haiku; hook keeps it read-only</td><td>8 · 16 · 20</td></tr>
+<tr><td>Copilot CLI</td><td>1.0.61</td><td><code>~/.copilot</code></td><td><code>cop</code> = <code>--agent router</code>; no edit/shell tools</td><td>8 · built-ins · 33</td></tr>
+<tr><td>VS Code</td><td>1.139.1</td><td>profile + <code>~/.copilot</code></td><td>Router agent: cheaper subagents + premium <b>handoffs</b></td><td>8 · 16 prompts · 20</td></tr>
+<tr><td>Cline</td><td>4.1.21 / CLI 3.0.65</td><td><code>Documents/Cline</code> + <code>~/.cline</code></td><td>Plan mode + read-only subagents</td><td>4 · 16 workflows · 20</td></tr>
+<tr><td>Codex CLI</td><td>0.157.1</td><td><code>~/.codex</code> + <code>~/.agents/skills</code></td><td>main thread + custom agents + profile files</td><td>7 · 16 skills · 20</td></tr>
+<tr><td>Aider</td><td>0.86.2</td><td><code>~/.aider.conf.yml</code> + <code>~/.aider</code></td><td>aliases/modes (<code>ai-ask</code> → <code>ai</code> → <code>ai-arch</code> → <code>ai-sec</code>)</td><td>— · 4 + 20 loaders · 20</td></tr></table>
+
+<h2 class="pb">4. How the design maps onto each tool</h2>
+<table><tr><th>Capability</th><th>OpenCode</th><th>Claude Code</th><th>Copilot CLI</th><th>VS Code</th><th>Cline</th><th>Codex</th><th>Aider</th></tr>
+<tr><td>Cheap router</td><td class="yes">yes</td><td class="yes">Haiku main agent</td><td class="yes">gpt-5-mini agent</td><td class="part">Medium tier (cost-tier rule)</td><td class="part">Plan mode</td><td class="part">main on Sol; cheap profile</td><td class="part">alias</td></tr>
+<tr><td>Router can't mutate</td><td class="yes">permissions</td><td class="yes">hook gate</td><td class="yes">tool list</td><td class="yes">tool list</td><td class="part">Plan mode blocks writes</td><td class="no">—</td><td class="no">—</td></tr>
+<tr><td>Subagents on own model</td><td class="yes">yes</td><td class="yes">frontmatter</td><td class="yes">settings map</td><td class="yes">model arrays</td><td class="yes">agents/*.yaml</td><td class="yes">agents/*.toml</td><td class="part">editor/weak model</td></tr>
+<tr><td>Pre-tool guard hook</td><td class="part">policies</td><td class="yes">yes</td><td class="yes">fail-closed</td><td class="yes">yes</td><td class="yes">both builds</td><td class="yes">yes</td><td class="no">n/a</td></tr>
+<tr><td>Hard deny rules</td><td class="yes">policies</td><td class="yes">permissions.deny</td><td class="part">managed file</td><td class="part">hook</td><td class="part">hook / legacy env</td><td class="yes">exec-policy</td><td class="part">options</td></tr>
+<tr><td>OS sandbox</td><td class="no">—</td><td class="yes">yes</td><td class="yes">yes</td><td class="yes">terminal</td><td class="no">—</td><td class="yes">yes</td><td class="no">—</td></tr>
+<tr><td>Secret env scrub</td><td class="part">policy</td><td class="yes">ENV_SCRUB</td><td class="yes">--secret-env-vars</td><td class="part">—</td><td class="part">op run</td><td class="yes">env policy</td><td class="part">op run</td></tr>
+<tr><td>Skills (on demand)</td><td class="yes">20</td><td class="yes">20</td><td class="yes">33</td><td class="yes">20</td><td class="yes">20</td><td class="yes">36</td><td class="part">/read-only loaders</td></tr>
+<tr><td>MCP (docs + GitHub)</td><td class="yes">7</td><td class="yes">5</td><td class="yes">4 + built-in</td><td class="yes">5</td><td class="yes">5</td><td class="yes">5</td><td class="no">none upstream</td></tr></table>
+
+<h2>5. Model tiers</h2>
+<table><tr><th>Tier</th><th>Claude Code</th><th>Copilot CLI</th><th>VS Code</th><th>Cline</th><th>Codex</th><th>Aider</th></tr>
+<tr><td>cheap (router/explore/review)</td><td>haiku</td><td>gpt-5-mini · haiku-4.5</td><td>GPT-6 Luna · Haiku 4.5</td><td>deepseek-flash</td><td>gpt-6-luna</td><td>deepseek-flash</td></tr>
+<tr><td>workhorse (developer/sre)</td><td>sonnet · medium</td><td>claude-sonnet-5</td><td>Claude Sonnet 5</td><td>claude-sonnet-5 (Act)</td><td>gpt-6-sol · medium</td><td>claude-sonnet-5</td></tr>
+<tr><td>reasoning (planner/architect)</td><td>opus · medium/high</td><td>gpt-5.5 · medium/high</td><td>GPT-6 Sol / Opus 5.5 (handoff)</td><td>gpt-6-sol (Plan)</td><td>gpt-6-sol · xhigh</td><td>gpt-6-sol (architect)</td></tr>
+<tr><td>premium (security, HIGH_RISK only)</td><td>opus · high</td><td>claude-opus-4.8</td><td>Opus 5.5 (handoff)</td><td>claude-opus-5.5</td><td>gpt-6-astra</td><td>claude-opus-5.5</td></tr></table>
+
+<h2>6. Guardrail coverage (shared <code>guardrails.json</code>: 33 command rules, 18 protected paths)</h2>
+<table><tr><th>Threat</th><th>Claude</th><th>Copilot CLI</th><th>VS Code</th><th>Cline</th><th>Codex</th><th>Aider</th></tr>
+<tr><td>Disk wipe / root-home delete</td><td>deny + hook</td><td>hook (+managed)</td><td>hook</td><td>hook</td><td>forbidden + hook</td><td>no auto shell</td></tr>
+<tr><td>Force-push / history rewrite</td><td>deny + hook</td><td>hook + deny-tool</td><td>ask + hook</td><td>hook</td><td>forbidden + hook</td><td>manual only</td></tr>
+<tr><td>IaC destroy / auto-approve</td><td>deny + hook</td><td>hook</td><td>ask + hook</td><td>hook</td><td>forbidden</td><td>manual only</td></tr>
+<tr><td>Secret files (.env, keys, state)</td><td>deny + hook + sandbox</td><td>hook + sandbox</td><td>edit-ask + hook</td><td>hook</td><td>hook + sandbox</td><td>.aiderignore</td></tr>
+<tr><td>Secret printing (op read, printenv…)</td><td>deny + hook</td><td>hook</td><td>hook</td><td>hook</td><td>forbidden</td><td>manual only</td></tr>
+<tr><td>Remote code piping (curl | sh)</td><td>hook</td><td>hook</td><td>hook</td><td>hook</td><td>prompt + hook</td><td>manual only</td></tr>
+<tr><td>Interactive hangs (vim, less, REPL)</td><td>hook</td><td>hook</td><td>hook</td><td>hook</td><td>hook</td><td>n/a</td></tr>
+<tr><td>Exfiltration endpoints</td><td>sandbox domains</td><td>deniedUrls</td><td>fetch not auto</td><td>—</td><td>network off</td><td>detect-urls off</td></tr>
+<tr><td>Pre-commit secret scan</td><td colspan="6">ggshield in every <code>commit</code> workflow. Aider sets <code>git-commit-verify: true</code> because its default skips hooks</td></tr></table>
+
+<h2 class="pb">7. Coexistence on one machine</h2>
+<ul><li><code>~/.copilot</code> is shared by the Copilot CLI and VS Code's Copilot harness. Both folders install <b>identical</b> instructions, skills and hooks; agents are target-scoped (<code>github-copilot</code> vs <code>vscode</code>).</li>
+<li><code>~/.agents/skills</code> (Codex) is also read by the Copilot CLI and Cline <code>next</code>. The Copilot and VS Code installers skip identical copies; Codex workflow skills live in Codex-only <code>~/.codex/skills</code>.</li>
+<li>VS Code's Copilot harness also reads <code>~/.claude/agents</code> and <code>~/.claude/skills</code>. <code>chat.useClaudeMdFile</code> is off so <code>CLAUDE.md</code> isn't loaded twice, but Claude agents will show in VS Code's picker if both are installed.</li>
+<li>Windows + WSL: each harness reads the host it runs on. Run the Windows <code>install.ps1</code> (from a local copy, because UNC scripts are blocked by RemoteSigned) and the WSL <code>install.sh</code>.</li></ul>
+
+<h2>8. Validation summary</h2>
+<table><tr><th>Check</th><th>Result</th></tr>
+<tr><td>Config parsing: 18 JSON/JSONC, 12 TOML, 18 YAML, 207 Markdown frontmatter files</td><td class="yes">pass</td></tr>
+<tr><td>Skill spec (name == folder, kebab-case, description ≤ 1024): 149 files</td><td class="yes">pass</td></tr>
+<tr><td>Codex exec-policy: 37 rules executed; all <code>match</code>/<code>not_match</code> examples hold</td><td class="yes">pass</td></tr>
+<tr><td>Guard hook self-tests (commands, paths, 5 payload formats, router gate)</td><td class="yes">70 / 70</td></tr>
+<tr><td>Installer smoke tests in throwaway HOMEs (all six tools)</td><td class="yes">34 / 34</td></tr>
+<tr><td>Instruction content preserved vs original AGENTS.md (6 files × 277 items)</td><td class="yes">0 missing</td></tr>
+<tr><td>Windows: real <code>PreToolUse.ps1</code> + Python guard (blocks drive-root delete, allows <code>dotnet test</code>)</td><td class="yes">pass</td></tr>
+<tr><td>PowerShell parser (6 scripts) · <code>bash -n</code> (all shell scripts) · LF line endings enforced</td><td class="yes">pass</td></tr>
+<tr><td>Live runs of each agent CLI</td><td class="part">not possible here (Claude/Codex/Aider/Cline not installed; gateway and OpenRouter not reachable from this network)</td></tr></table>
+
+<h2>9. Issues found and fixed during the build</h2>
+<table><tr><th>#</th><th>Issue</th><th>Fix</th></tr>
+<tr><td>1</td><td>Files authored from Windows had <b>CRLF</b> endings (146 files, including the earlier OpenCode config). This breaks shebangs and hooks on macOS/Linux</td><td>All normalised to LF; <code>build.py</code> now normalises and <code>validate.py</code> rejects CRLF</td></tr>
+<tr><td>2</td><td><code>git --no-pager push</code> / <code>git -C x push -f</code> bypassed the push rules</td><td>The guard's git regexes now accept global options; tests added</td></tr>
+<tr><td>3</td><td>The <code>adr</code> workflow overwrote the <code>adr</code> skill (and would clash with Claude's <code>/adr</code>)</td><td>Command renamed to <code>write-adr</code> in all tools</td></tr>
+<tr><td>4</td><td>VS Code refuses subagents priced above the caller, so a cheap router can't call premium specialists</td><td>Router on the Medium tier; Architect and Security as handoffs</td></tr>
+<tr><td>5</td><td>Cline subagents bypass approvals</td><td>All defined subagents are read-only; mutations stay in Act mode</td></tr>
+<tr><td>6</td><td>Copilot CLI user settings have no allow/deny rules</td><td>Hook + sandbox + aliases; optional root-owned managed policy</td></tr>
+<tr><td>7</td><td>Codex custom prompts were removed; the 32 KiB instructions cap would truncate AGENTS.md</td><td>Workflow skills; <code>project_doc_max_bytes = 65536</code></td></tr>
+<tr><td>8</td><td>Claude's built-in Explore now inherits the main model; a main-thread router gate would have blocked read-only context commands</td><td>Explore overridden to Haiku; read-only allowlist in the router gate</td></tr>
+<tr><td>9</td><td>Aider commits with <code>--no-verify</code> by default (skips ggshield); <code>~/.env</code> auto-load would clobber <code>op run</code> keys</td><td><code>git-commit-verify: true</code>; <code>~/.aider/aider.op.env</code></td></tr>
+<tr><td>10</td><td>Windows execution policy blocks unsigned scripts on <code>\\wsl.localhost</code> paths</td><td>Documented: run the installers from a local copy</td></tr></table>
+
+<h2>10. Limitations &amp; assumptions</h2>
+<ul><li><b>Model ids</b> follow each tool's catalog at verification time. Confirm them once in each picker; VS Code agents fall back to Auto.</li>
+<li><b>Gateway and OpenRouter compatibility</b>: LiteLLM <code>/v1/responses</code> for Codex, Anthropic pass-through for Claude, and <code>reasoning_effort</code> passthrough are assumed. They are optional overlays where uncertain.</li>
+<li><b>Cline</b>: provider, Plan/Act model and auto-approve choices live in extension state, so they are documented, not written.</li>
+<li><b>Aider prices</b> in <code>model.metadata.json</code> are placeholders.</li>
+<li><b>The guard is a strong guardrail, not a sandbox</b>. The OS sandboxes (Claude, Copilot, VS Code, Codex) and least-privilege credentials remain the real boundary.</li></ul>
+
+<h2>11. Action items</h2>
+<table><tr><th>#</th><th>Action</th></tr>
+<tr><td>1</td><td>Pick the tools you use and run <code>DRY_RUN=1 ./install.sh</code> then <code>./install.sh</code> in each folder (Windows: <code>install.ps1</code> from a local copy).</td></tr>
+<tr><td>2</td><td>Point the <code>op://</code> references (<code>aider.op.env</code>, <code>cline.op.env</code>, <code>mcp.op.env</code>, Codex/Claude <code>op read</code>) at your 1Password vault items.</td></tr>
+<tr><td>3</td><td>Trust or enable hooks where required: Codex <code>/hooks</code>, the Cline "Enable Hooks" toggle, VS Code <code>chat.useHooks</code> (set). Claude and Copilot load them automatically.</td></tr>
+<tr><td>4</td><td>Run <code>codex --strict-config</code>, Claude <code>/agents</code> and <code>/hooks</code>, Copilot <code>/env</code>, and VS Code <i>Chat: Diagnostics</i> to confirm what loaded.</td></tr>
+<tr><td>5</td><td>Optional hardening: <code>github-copilot-cli/install.sh --managed</code>; WSL2 sandbox packages <code>bubblewrap socat</code>.</td></tr>
+<tr><td>6</td><td>To change a rule or a prompt, edit <code>_shared/</code>, then run <code>build.py</code> → <code>validate.py</code> → <code>install_smoke.sh</code>, and re-install.</td></tr></table>
+</body></html>

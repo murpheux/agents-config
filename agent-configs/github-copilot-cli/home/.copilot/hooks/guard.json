@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": "python3 \"$HOME/.copilot/hooks/guard.py\" --format copilot",
+        "powershell": "py -3 \"$env:USERPROFILE\\.copilot\\hooks\\guard.py\" --format copilot",
+        "timeoutSec": 15
+      }
+    ]
+  }
+}

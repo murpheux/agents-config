@@ -1,0 +1,30 @@
+{
+  "_comment": "OPTIONAL hardening: Copilot CLI managed settings (deny/ask/allow are only honoured here, not in user settings). Must be root/admin-owned: Linux /etc/github-copilot/managed-settings.json · macOS /Library/Application Support/GitHubCopilot/managed-settings.json · Windows %ProgramFiles%\\GitHubCopilot\\managed-settings.json. Once any list is set, unmatched operations ASK, so read-only work is allow-listed. Deny always wins, even over --yolo.",
+  "permissions": {
+    "disableBypassPermissionsMode": "allow-auto-only",
+    "deny": [
+      "Shell(rm -rf / *)", "Shell(rm -rf ~ *)", "Shell(rm -rf ~/ *)", "Shell(sudo rm *)", "Shell(srm *)",
+      "Shell(dd *)", "Shell(mkfs *)", "Shell(wipefs *)", "Shell(diskutil eraseDisk *)", "Shell(diskutil partitionDisk *)", "Shell(csrutil *)",
+      "Shell(git push --force *)", "Shell(git push -f *)", "Shell(git filter-branch *)",
+      "Shell(terraform destroy *)", "Shell(tofu destroy *)", "Shell(aws s3 rb *)", "Shell(kubectl delete namespace *)",
+      "Shell(op read *)", "Shell(op item get *)", "Shell(gh auth token *)", "Shell(printenv *)", "Shell(env)",
+      "PowerShell(Format-Volume *)", "PowerShell(Clear-Disk *)", "PowerShell(Invoke-Expression *)",
+      "Read(~/.ssh/id_*)", "Read(~/.aws/credentials)", "Read(~/.kube/config)", "Read(~/.docker/config.json)", "Read(~/.gnupg/**)",
+      "Read(**/.env)", "Read(**/*.tfstate)", "Read(**/*.key)",
+      "Edit(**/.env)", "Edit(**/.git/**)", "Edit(~/.ssh/**)", "Edit(**/*.tfstate)",
+      "Domain(pastebin.com)", "Domain(transfer.sh)", "Domain(webhook.site)"
+    ],
+    "ask": [
+      "Shell(git push *)", "Shell(git reset --hard *)", "Shell(git clean *)", "Shell(terraform apply *)", "Shell(kubectl apply *)",
+      "Shell(kubectl delete *)", "Shell(helm *)", "Shell(docker stack rm *)", "Shell(docker service rm *)", "Shell(ansible-playbook *)"
+    ],
+    "allow": [
+      "Read(/**)", "Read(./**)",
+      "Shell(git status *)", "Shell(git diff *)", "Shell(git log *)", "Shell(git show *)", "Shell(ls *)", "Shell(rg *)",
+      "Shell(go test *)", "Shell(go build *)", "Shell(go vet *)", "Shell(dotnet build *)", "Shell(dotnet test *)",
+      "Shell(pytest *)", "Shell(ruff check *)", "Shell(npm test *)", "Shell(npx tsc --noEmit *)", "Shell(shellcheck *)",
+      "Shell(terraform fmt *)", "Shell(terraform validate *)", "Shell(tflint *)", "Shell(ansible-lint *)",
+      "Shell(ggshield secret scan *)", "Shell(trivy fs *)", "Shell(trivy config *)", "Shell(kubectl get *)", "Shell(kubectl describe *)", "Shell(docker service ps *)"
+    ]
+  }
+}

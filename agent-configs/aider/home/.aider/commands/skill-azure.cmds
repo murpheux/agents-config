@@ -1,0 +1,2 @@
+# /load this file to add the 'azure' skill to the chat as read-only context
+/read-only ~/.aider/skills/azure/SKILL.md

@@ -1,0 +1,2 @@
+# /load this file to add the 'incident-response' skill to the chat as read-only context
+/read-only ~/.aider/skills/incident-response/SKILL.md

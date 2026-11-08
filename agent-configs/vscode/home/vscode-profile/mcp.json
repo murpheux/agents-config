@@ -1,0 +1,28 @@
+{
+  "servers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/"
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "op",
+      "args": ["run", "--env-file=${userHome}/.copilot/mcp.op.env", "--", "npx", "-y", "@upstash/context7-mcp"]
+    },
+    "mslearn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp"
+    },
+    "awsdocs": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": { "FASTMCP_LOG_LEVEL": "ERROR", "AWS_DOCUMENTATION_PARTITION": "aws" }
+    },
+    "terraform": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "hashicorp/terraform-mcp-server"]
+    }
+  }
+}

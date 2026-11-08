@@ -1,0 +1,81 @@
+# ~/.aider.conf.yml — Aider v0.86.x global configuration (Murpheux)
+# Rendered by install.sh: __HOME__ and __CA_BUNDLE__ are replaced per machine (macOS / WSL).
+# Precedence: CLI flags > AIDER_* env (incl. .env files) > repo/cwd .aider.conf.yml > this file.
+# NOTE: list values (read, lint-cmd, alias) never merge — a repo config REPLACES them.
+
+# ── Models / cost tiers ────────────────────────────────────────────────────────────────
+# workhorse (developer) via Agentgateway; cheap weak model for commit messages & history summaries.
+model: openai/claude-sonnet-5
+weak-model: openai/deepseek-flash
+editor-model: openai/claude-sonnet-5          # used only in architect mode
+editor-edit-format: editor-diff
+edit-format: diff
+reasoning-effort: medium                      # main model only; /reasoning-effort to change per session
+check-model-accepts-settings: true
+show-model-warnings: true
+alias:
+  - "cheap:openai/deepseek-flash"
+  - "dev:openai/claude-sonnet-5"
+  - "arch:openrouter/openai/gpt-6-sol"
+  - "sec:openrouter/anthropic/claude-opus-5.5"
+auto-accept-architect: false                  # review the architect's plan before the editor applies it
+
+# ── Gateway / TLS (keys are injected by `op run`, never stored here) ──────────────────
+openai-api-base: https://scarlet:4000/v1
+verify-ssl: true
+set-env:
+  - SSL_CERT_FILE=__CA_BUNDLE__               # full system bundle incl. the home-lab CA (not the CA alone)
+  - REQUESTS_CA_BUNDLE=__CA_BUNDLE__
+  - NO_PROXY=scarlet,localhost,127.0.0.1
+timeout: 600
+model-settings-file: __HOME__/.aider/model.settings.yml
+model-metadata-file: __HOME__/.aider/model.metadata.json
+
+# ── Context & token cost ──────────────────────────────────────────────────────────────
+cache-prompts: true                           # caches system prompt + CONVENTIONS + repo map
+cache-keepalive-pings: 0                      # pings cost money; raise to 2 only for long idle gaps
+map-tokens: 1024
+map-refresh: files
+max-chat-history-tokens: 6000                 # older turns are summarised by the weak model
+read:
+  - "~/.aider/CONVENTIONS.md"                 # global instructions (AGENTS.md equivalent)
+
+# ── Git & commits ─────────────────────────────────────────────────────────────────────
+auto-commits: true                            # one reversible commit per change → /undo
+dirty-commits: false                          # never sweep Murpheux's uncommitted work into a commit
+git-commit-verify: true                       # run pre-commit hooks (ggshield) — default is --no-verify!
+attribute-co-authored-by: true
+attribute-author: false
+attribute-committer: false
+gitignore: false                              # don't let aider edit each repo's .gitignore
+add-gitignore-files: false                    # gitignored files (.env, state, keys) stay invisible
+subtree-only: false
+
+# ── Lint (aider appends the relative file path; keys must be grep-ast language names) ──
+auto-lint: true
+lint-cmd:
+  - "python: ruff check --quiet"
+  - "go: __HOME__/.aider/bin/lint-go"
+  - "csharp: dotnet format whitespace --folder --verify-no-changes --include"
+  - "typescript: npx --no-install biome check"
+  - "javascript: npx --no-install biome check"
+  - "bash: shellcheck -f gcc"
+  - "powershell: pwsh -NoProfile -Command Invoke-ScriptAnalyzer -EnableExit -Path"
+  - "hcl: terraform fmt -check -diff"
+  - "dockerfile: hadolint"
+auto-test: false                              # set test-cmd per repo (see README) — failing output is expensive
+
+# ── Safety ────────────────────────────────────────────────────────────────────────────
+suggest-shell-commands: false                 # no model-proposed shell commands
+yes-always: false
+detect-urls: false                            # don't pull untrusted web pages into context (prompt injection)
+watch-files: false
+analytics-disable: true
+check-update: true
+show-release-notes: false
+
+# ── UX ────────────────────────────────────────────────────────────────────────────────
+notifications: true
+chat-language: English
+line-endings: lf
+pretty: true

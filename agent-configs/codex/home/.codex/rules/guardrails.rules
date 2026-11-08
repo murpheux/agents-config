@@ -1,0 +1,70 @@
+# ~/.codex/rules/guardrails.rules — Codex exec-policy (Starlark). Strictest match wins:
+# forbidden > prompt > allow. Patterns are exact argv PREFIXES; a list inside a pattern = alternatives.
+# No `allow` rules on purpose: `allow` runs a command OUTSIDE the sandbox. Read-only commands already
+# run inside the sandbox without prompting. The guard hook covers what prefixes can't (e.g. flags
+# placed later on the line, pipes into interpreters, .env access).
+# Test:  codex execpolicy check --pretty --rules ~/.codex/rules/guardrails.rules -- terraform destroy
+
+# ── Catastrophic filesystem / disk ─────────────────────────────────────────────────────────
+prefix_rule(pattern=["rm", ["-rf", "-fr", "-Rf", "-rF", "--recursive"], ["/", "/*", "~", "~/", "~/*", "$HOME", "$HOME/"]],
+    decision="forbidden", justification="Recursive delete of / or home. Murpheux runs this manually if ever needed.",
+    match=["rm -rf /", "rm -rf ~"], not_match=["rm -rf build"])
+prefix_rule(pattern=["sudo", "rm"], decision="forbidden", justification="Privileged deletion.")
+prefix_rule(pattern=["srm"], decision="forbidden", justification="Irreversible secure delete.")
+prefix_rule(pattern=["dd"], decision="prompt", justification="Raw block copies can wipe devices.")
+prefix_rule(pattern=[["mkfs", "mkfs.ext4", "mkfs.xfs", "mkfs.vfat", "mkfs.btrfs", "newfs_apfs", "newfs_hfs", "wipefs"]],
+    decision="forbidden", justification="Filesystem destruction.")
+prefix_rule(pattern=["gpt", "destroy"], decision="forbidden", justification="Partition table destruction.")
+prefix_rule(pattern=["diskutil", ["eraseDisk", "eraseVolume", "partitionDisk", "zeroDisk", "randomDisk", "secureErase", "erasedisk", "partitiondisk"]],
+    decision="forbidden", justification="macOS disk erase/partition.")
+prefix_rule(pattern=["diskutil", ["apfs", "APFS"], ["deleteContainer", "deletecontainer"]], decision="forbidden", justification="APFS container deletion.")
+prefix_rule(pattern=["csrutil"], decision="forbidden", justification="System Integrity Protection tampering.")
+prefix_rule(pattern=["chmod", "-R", ["777", "000", "a+rwx"], "/"], decision="forbidden", justification="Recursive permission change on /.")
+prefix_rule(pattern=["chown", "-R"], decision="prompt", justification="Recursive ownership change.")
+prefix_rule(pattern=["brew", ["uninstall", "remove"], ["--zap", "--force"]], decision="forbidden", justification="Unsafe Homebrew purge.")
+
+# ── Interpreters wrapping unsplittable scripts ──────────────────────────────────────────────
+prefix_rule(pattern=[["bash", "sh", "zsh"], ["-c", "-lc", "-ic"]], decision="prompt",
+    justification="Opaque shell script — review before running.", not_match=["bash script.sh"])
+prefix_rule(pattern=[["pwsh", "powershell"], ["-c", "-Command", "-EncodedCommand"]], decision="prompt",
+    justification="Opaque PowerShell script — review before running.")
+
+# ── Git ──────────────────────────────────────────────────────────────────────────────────────
+prefix_rule(pattern=["git", "push", ["--force", "-f", "--force-with-lease", "--mirror", "--delete"]],
+    decision="forbidden", justification="History rewrite / remote deletion.", match=["git push --force origin main"])
+prefix_rule(pattern=["git", "push"], decision="prompt", justification="Pushes are Murpheux's call.")
+prefix_rule(pattern=["git", "reset", "--hard"], decision="prompt", justification="Discards local work.")
+prefix_rule(pattern=["git", "clean"], decision="prompt", justification="Deletes untracked files.")
+prefix_rule(pattern=["git", ["filter-branch", "filter-repo"]], decision="forbidden", justification="History rewrite.")
+
+# ── Infrastructure as code ─────────────────────────────────────────────────────────────────
+prefix_rule(pattern=[["terraform", "tofu", "terragrunt"], "destroy"], decision="forbidden",
+    justification="Infrastructure destruction — emit the plan, a human destroys.")
+prefix_rule(pattern=[["terraform", "tofu", "terragrunt"], ["apply", "import", "taint", "untaint", "state", "force-unlock"]],
+    decision="prompt", justification="Mutates infrastructure or state — show `plan -out=tfplan` first.",
+    match=["terraform apply tfplan"], not_match=["terraform plan"])
+prefix_rule(pattern=["ansible-playbook"], decision="prompt", justification="May touch production hosts; prefer --check --diff first.")
+
+# ── Kubernetes / containers ────────────────────────────────────────────────────────────────
+prefix_rule(pattern=["kubectl", "delete", ["namespace", "ns", "pv", "pvc", "crd", "node"]], decision="forbidden",
+    justification="Cluster-scoped / data-bearing deletion.")
+prefix_rule(pattern=["kubectl", ["delete", "drain", "cordon", "uncordon", "scale", "rollout", "apply", "patch", "replace", "edit", "annotate", "label", "taint", "exec"]],
+    decision="prompt", justification="Mutating cluster operation.", not_match=["kubectl get pods"])
+prefix_rule(pattern=["helm", ["install", "upgrade", "uninstall", "rollback", "delete"]], decision="prompt", justification="Mutating release operation.")
+prefix_rule(pattern=["docker", ["stack", "service"], ["rm", "update", "scale", "rollback"]], decision="prompt", justification="Mutates Swarm workloads.")
+prefix_rule(pattern=["docker", "swarm", ["leave", "init", "join"]], decision="prompt", justification="Changes swarm membership.")
+prefix_rule(pattern=["docker", "system", "prune"], decision="prompt", justification="Deletes images/containers/volumes.")
+prefix_rule(pattern=["docker", "volume", ["rm", "prune"]], decision="prompt", justification="Deletes data volumes.")
+
+# ── Cloud (direct and via 1Password plugin) ────────────────────────────────────────────────
+prefix_rule(pattern=["aws", "s3", "rb"], decision="forbidden", justification="Bucket deletion.")
+prefix_rule(pattern=["op", "plugin", "run", "--", "aws", "s3", "rb"], decision="forbidden", justification="Bucket deletion.")
+prefix_rule(pattern=["aws", "configure", ["get", "export-credentials"]], decision="forbidden", justification="Prints AWS credentials.")
+prefix_rule(pattern=["az", ["group", "keyvault", "storage"], "delete"], decision="prompt", justification="Azure resource deletion.")
+
+# ── Secrets ────────────────────────────────────────────────────────────────────────────────
+prefix_rule(pattern=["op", ["read", "inject"]], decision="forbidden",
+    justification="Prints secrets into model context — use `op plugin run --` / `op run` so values stay out of output.")
+prefix_rule(pattern=["op", ["item", "document"], "get"], decision="forbidden", justification="Prints 1Password items.")
+prefix_rule(pattern=["gh", "auth", "token"], decision="forbidden", justification="Prints the GitHub token.")
+prefix_rule(pattern=["printenv"], decision="forbidden", justification="Dumps environment secrets.")

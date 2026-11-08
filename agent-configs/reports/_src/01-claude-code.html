@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Claude Code — configuration report</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="cover"><h1>Claude Code — Configuration Report</h1>
+<div class="sub">Prepared for <b>Murpheux</b> · 28 September 2026 · Verified against <b>Claude Code 2.1.283</b> (latest in <code>anthropics/claude-code</code> CHANGELOG)</div>
+<div class="sub">Folder: <code>~/agent-configs/claude-code/</code> → installs to <code>~/.claude/</code></div></div>
+
+<h2>1. Summary</h2>
+<p>Claude Code is the closest match to the OpenCode design. Since 2026 its <code>settings.json</code> accepts <code>"agent": "router"</code>, so the <b>main session itself runs as a cheap Haiku router</b>. The shared guard hook keeps that main thread read-only, which forces delegation to seven specialist subagents on the right model tier. Enforcement is layered: <code>permissions.deny</code> (always wins, even in bypass mode), the PreToolUse guard hook, the OS sandbox, and credential scrubbing of subprocess environments.</p>
+<div class="kpi"><div><b>8</b>agents</div><div><b>16</b>slash commands</div><div><b>20</b>skills</div><div><b>137</b>allow · <b>9</b> ask · <b>66</b> deny</div><div><b>5</b>MCP servers</div></div>
+
+<h2>2. Sources used</h2>
+<ul><li><b>hesreallyhim/awesome-claude-code</b> (README: agent skills, workflows, hooks, status lines, usage monitors, orchestrators).</li>
+<li>Official: <code>anthropics/claude-code</code> CHANGELOG + plugins, <code>anthropics/skills</code>, <code>code.claude.com/docs</code> (settings, permissions, sub-agents, skills, hooks, MCP, sandboxing, model-config, env-vars), <code>agentskills.io</code> spec.</li></ul>
+
+<h2>3. What was built</h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>.claude/settings.json</code></td><td><code>agent: router</code>, model <code>sonnet</code> + effort medium for direct sessions, <code>autoCompactWindow 200000</code>, permissions (allow read-only/validation, ask for commits/plan/apply/helm/op, deny destructive + secret files), guard hook, sandbox, env, status line</td></tr>
+<tr><td><code>.claude/settings.gateway.json</code></td><td>optional overlay (<code>./install.sh --gateway</code>): <code>ANTHROPIC_BASE_URL=https://scarlet:4000</code>, key via <code>apiKeyHelper</code> (<code>op read</code> executed by Claude Code, never the model), gateway model discovery, <code>NODE_EXTRA_CA_CERTS</code></td></tr>
+<tr><td><code>.claude/CLAUDE.md</code></td><td>full global instructions (every fact of the original AGENTS.md; Claude-specific §13/§14/§17)</td></tr>
+<tr><td><code>.claude/agents/*.md</code></td><td>router, explore (overrides built-in), reviewer, planner, developer, sre, architect, security</td></tr>
+<tr><td><code>.claude/commands/*.md</code></td><td>16 commands with <code>!`…`</code> context injection, pre-approved read-only <code>allowed-tools</code>, <code>model: haiku</code> on cheap ones</td></tr>
+<tr><td><code>.claude/skills/</code></td><td>20 skills (name == folder, ≤1024-char descriptions)</td></tr>
+<tr><td><code>.claude/hooks/guard.py</code> + <code>guardrails.json</code></td><td>shared guard with <code>--main-thread-readonly</code> router gate</td></tr>
+<tr><td><code>.claude/statusline.py</code></td><td>model · effort · agent · $ cost · context % (warns ≥ 70%)</td></tr>
+<tr><td><code>mcp/add-mcp-servers.sh</code></td><td><code>claude mcp add-json --scope user</code>: github (read-only, 5 toolsets), context7, mslearn, awsdocs, terraform — secrets as runtime <code>${VAR}</code></td></tr></table>
+
+<h2>4. Agent tiers</h2>
+<table><tr><th>Agent</th><th>Model · effort</th><th>Tools / notes</th></tr>
+<tr><td>router (main session)</td><td>haiku</td><td>read/search/web + Agent; Edit/Write and non-read-only Bash blocked by the hook</td></tr>
+<tr><td>Explore (override)</td><td>haiku</td><td>read-only; the built-in inherits the main model since 2.1.198</td></tr>
+<tr><td>reviewer</td><td>haiku</td><td>read + git; <code>omitClaudeMd</code> keeps its context small</td></tr>
+<tr><td>planner</td><td>opus · medium</td><td><code>permissionMode: plan</code> (read-only)</td></tr>
+<tr><td>developer / sre</td><td>sonnet · medium</td><td>all tools / read + shell</td></tr>
+<tr><td>architect</td><td>opus · high</td><td>read + docs/diagram writes</td></tr>
+<tr><td>security</td><td>opus · high</td><td>read + scanners (premium, HIGH_RISK only)</td></tr></table>
+
+<h2>5. Cost levers</h2>
+<ul><li>Haiku router plus isolated subagent contexts: the router never carries implementation transcripts.</li>
+<li>Explore overridden to Haiku; <code>/commit</code> <code>/explain</code> <code>/summarize</code> <code>/pr</code> pinned to Haiku.</li>
+<li><code>autoCompactWindow: 200000</code>, <code>BASH_MAX_OUTPUT_LENGTH=20000</code>, subagent depth 2 / 4 concurrent, <code>maxTurns</code> per agent.</li>
+<li>Skills load on demand; a status line shows $ and context % live; <code>npx ccusage</code> for history.</li>
+<li>Not used: <code>advisorModel</code>. Each advisor call re-reads the whole conversation uncached, and it needs pass-through to the Anthropic API.</li></ul>
+
+<h2>6. Guardrails</h2>
+<ol><li><b>permissions.deny</b>: push, reset --hard, filter-branch, root/home rm, disk tools, destroy, <code>-auto-approve</code>, bucket/namespace deletion, secret-printing commands, secret files, <code>.git/**</code> edits, 1Password MCP.</li>
+<li><b>Guard hook</b>: 33 regex rules and 18 protected-path patterns, for cases prefix rules miss (<code>git -C x push -f</code>, <code>curl | sh</code>, <code>.env.*</code> with example exceptions, interactive programs). It also runs the router gate.</li>
+<li><b>Sandbox</b>: writes confined to the project; network limited to package registries and docs, and a new domain prompts; cloud and cluster CLIs are excluded and go through normal prompts.</li>
+<li><code>CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1</code>, <code>DISABLE_TELEMETRY=1</code>, <code>enableAllProjectMcpServers: false</code>.</li></ol>
+
+<h2>7. From awesome-claude-code</h2>
+<table><tr><th>Entry</th><th>Decision</th></tr>
+<tr><td>dshakes/compass (cost-tiered agents + router)</td><td>Idea adopted natively; its installer (replaces <code>~/.claude</code> with symlinks) not used</td></tr>
+<tr><td>kenryu42/claude-code-safety-net</td><td>Idea adopted → <code>guard.py</code></td></tr>
+<tr><td>sirmalloc/ccstatusline, claude-hud</td><td>Idea adopted → <code>statusline.py</code></td></tr>
+<tr><td>ccusage</td><td>Install (cost reports)</td></tr>
+<tr><td>trailofbits/skills, antonbabenko/terraform-skill</td><td>Install (security and Terraform skills)</td></tr>
+<tr><td>jgraph/drawio-mcp plugin, Anthropic security-guidance plugin</td><td>Install (listed in <code>add-mcp-servers.sh</code>)</td></tr>
+<tr><td>dagger/container-use</td><td>Install for isolated parallel/bypass work</td></tr>
+<tr><td>ypollak2/llm-router</td><td>Skip; LiteLLM already routes, so only the policy was copied</td></tr></table>
+
+<h2>8. Gotchas handled</h2>
+<ul><li>Deny beats allow and can't be carved out, so <code>.env.example</code> exceptions live in the hook rather than in deny rules.</li>
+<li>Bash rules are text-based and can be routed around (<code>sh -c</code>, absolute paths); the hook and sandbox are the real boundary.</li>
+<li>A leading <code>/</code> in user settings means <code>~/.claude/</code>, so all path rules use <code>~/</code> or <code>**/</code>.</li>
+<li>Hooks fail open on a wrong path or a timeout; the installer runs the guard self-test and aborts on failure.</li>
+<li><code>CLAUDE_CODE_SUBAGENT_MODEL</code> no longer overrides frontmatter, so every agent pins its own model.</li>
+<li>A non-Anthropic gateway disables MCP tool search, which is why the gateway is an opt-in overlay.</li></ul>
+
+<h2>9. Validation</h2>
+<p>JSON/frontmatter/skill-spec validation passed. The guard's 70 self-tests passed. The installer smoke test in a temp HOME confirmed: 8 agents, 16 commands and 20 skills installed; the hook denies a force-push from a subagent; the router gate denies a main-thread Edit; the status line renders. The instructions retain all 277 checked items of the original AGENTS.md. Claude Code isn't installed on this workstation, so there was no live run.</p>
+
+<h2>10. Install &amp; next steps</h2>
+<pre>cd ~/agent-configs/claude-code &amp;&amp; DRY_RUN=1 ./install.sh &amp;&amp; ./install.sh      # add --gateway for Agentgateway
+./mcp/add-mcp-servers.sh
+claude            # router session;  direct session: ROUTER_MODE=off claude --agent developer
+# WSL2 sandbox: sudo apt install bubblewrap socat</pre>
+</body></html>

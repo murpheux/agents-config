@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Aider — configuration report</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="cover"><h1>Aider — Configuration Report</h1>
+<div class="sub">Prepared for <b>Murpheux</b> · 28 September 2026 · Verified against <b>Aider v0.86.2</b> (latest release; main 0.86.3.dev)</div>
+<div class="sub">Folder: <code>~/agent-configs/aider/</code> → installs to <code>~/.aider.conf.yml</code> and <code>~/.aider/</code></div></div>
+
+<h2>1. Summary</h2>
+<p>Upstream Aider has a single agent loop. It has <b>no subagents, hooks, MCP or custom slash commands</b>; the <code>cecli</code> fork adds them. The OpenCode design was mapped onto Aider's native levers:</p>
+<ul><li><b>model tiers</b>: main, weak (commit messages and history summaries), editor, and architect mode;</li>
+<li><b>aliases and wrappers</b> as the router;</li>
+<li><b><code>/load</code> command files</b> as workflows;</li>
+<li><b>read-only skill files</b> loaded on demand;</li>
+<li>Aider's own <b>safety options</b>.</li></ul>
+<p>The most important security fix: Aider commits with <code>--no-verify</code> by default, which silently skips the ggshield pre-commit hook. This config turns verification on.</p>
+<div class="kpi"><div><b>7</b>tiered entry points</div><div><b>5</b>model settings</div><div><b>24</b>/load files</div><div><b>20</b>skills</div><div><b>9</b>linters</div></div>
+
+<h2>2. Sources used</h2>
+<ul><li><code>Aider-AI/aider</code> source and docs: the config search order, options/args, advanced model settings, reasoning, caching, lint-test, git, openai-compat, OpenRouter, <code>sample.aider.conf.yml</code> and HISTORY.</li>
+<li>Community (no awesome list was provided): Aider-AI/conventions, ai-repository-security-baseline (<code>.aiderignore</code>), dbatools.ai (PowerShell), cecli, aider-desk, aider-mcp-server, bradAGI/awesome-cli-coding-agents.</li></ul>
+
+<h2>3. What was built</h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>~/.aider.conf.yml</code></td><td>models and aliases; gateway base URL; TLS through the full system CA bundle; cache/repo-map/history budgets; the conventions file; git safety; per-language lint; safety options</td></tr>
+<tr><td><code>~/.aider/model.settings.yml</code></td><td>per-model edit format, weak/editor models, <code>cache_control</code>, reasoning passthrough (<code>accepts_settings</code>), <code>max_tokens</code> caps, and OpenRouter <code>data_collection: deny</code></td></tr>
+<tr><td><code>~/.aider/model.metadata.json</code></td><td>context limits and prices (placeholders), so <code>/tokens</code> and the cost report work for gateway models</td></tr>
+<tr><td><code>~/.aider/CONVENTIONS.md</code></td><td>full global instructions, read-only and prompt-cached</td></tr>
+<tr><td><code>~/.aider/aider-aliases.sh</code></td><td><code>ai</code>, <code>ai-ask</code>, <code>ai-cheap</code>, <code>ai-arch</code>, <code>ai-review</code>, <code>ai-sec</code>, <code>ai-sre</code>. All start through <code>op run --env-file ~/.aider/aider.op.env</code></td></tr>
+<tr><td><code>~/.aider/commands/*.cmds</code></td><td><code>review</code>, <code>security-review</code>, <code>plan</code>, <code>commit-check</code>, plus 20 <code>skill-&lt;id&gt;.cmds</code> loaders</td></tr>
+<tr><td><code>~/.aider/skills/</code>, <code>bin/lint-go</code>, <code>templates/.aiderignore</code></td><td>skills; a package-level Go lint wrapper; the per-repo secrets ignore file</td></tr></table>
+
+<h2>4. Routing (aliases = router)</h2>
+<table><tr><th>Command</th><th>Mode · model</th><th>Use</th></tr>
+<tr><td><code>ai-ask</code></td><td>ask · <code>openai/deepseek-flash</code> · effort low</td><td>SIMPLE questions, exploration</td></tr>
+<tr><td><code>ai-cheap</code></td><td>code · deepseek-flash · repo map 512</td><td>trivial edits</td></tr>
+<tr><td><code>ai</code></td><td>code · <code>openai/claude-sonnet-5</code> · medium</td><td>NORMAL development</td></tr>
+<tr><td><code>ai-arch</code></td><td>architect · <code>openrouter/openai/gpt-6-sol</code> plans → sonnet applies</td><td>COMPLEX / EXPERT</td></tr>
+<tr><td><code>ai-review</code> · <code>ai-sec</code></td><td>ask · deepseek-flash · <code>openrouter/anthropic/claude-opus-5.5</code></td><td>diff review · HIGH_RISK security review</td></tr></table>
+
+<h2>5. Cost levers</h2>
+<ul><li><code>cache-prompts</code> caches the system prompt, conventions and repo map, and requires <code>cache_control</code> per model.</li>
+<li><code>cache-keepalive-pings: 0</code>, because pings cost money.</li>
+<li><code>map-tokens: 1024</code> and <code>max-chat-history-tokens: 6000</code>; old turns are summarised by the weak model.</li>
+<li><code>auto-test: false</code>, because failing output is re-sent up to 3 times; the per-repo <code>test-cmd</code> examples pipe through <code>tail</code>.</li>
+<li>Reasoning effort only reaches the main model; <code>max_tokens</code> caps are set per model; aliases pick the cheapest tier.</li>
+<li>Aider never enforces budgets, so put spend limits on the LiteLLM virtual key.</li></ul>
+
+<h2>6. Security</h2>
+<ul><li><b>Commits</b>: <code>git-commit-verify: true</code> runs ggshield and other hooks; <code>dirty-commits: false</code> never sweeps in your uncommitted work; signing follows <code>commit.gpgsign</code>.</li>
+<li><b>Shell</b>: <code>suggest-shell-commands: false</code>, <code>yes-always: false</code> — nothing runs unless you type <code>/run</code> or confirm.</li>
+<li><b>Context</b>:
+  <ul><li><code>detect-urls: false</code> keeps untrusted web content out;</li>
+  <li><code>add-gitignore-files: false</code>;</li>
+  <li>the <code>.aiderignore</code> template covers env files, keys, state, kube/cloud configs;</li>
+  <li><code>gitignore: false</code> stops Aider editing each repo's <code>.gitignore</code>.</li></ul></li>
+<li><b>Credentials</b>: injected per process by <code>op run</code>. The reference file is <i>not</i> named <code>~/.env</code>, because Aider auto-loads that with override and would replace the real keys with <code>op://</code> literals.</li>
+<li><b>TLS</b>: <code>verify-ssl: true</code>, with <code>SSL_CERT_FILE</code>/<code>REQUESTS_CA_BUNDLE</code> pointing at the full OS bundle, not at the home-lab CA alone.</li></ul>
+
+<h2>7. Gotchas handled</h2>
+<ul><li><b>Lists never merge</b>: a repo-level <code>read:</code> replaces the global one, so the README shows repeating it.</li>
+<li><b>Paths</b>: <code>~</code> expands only in <code>read</code>, so settings and metadata paths are absolute, rendered per machine by the installer.</li>
+<li><b>Lint keys</b>: <code>lint-cmd</code> entries are quoted with grep-ast language keys (<code>csharp</code>, <code>hcl</code>, <code>powershell</code>, <code>bash</code>, <code>dockerfile</code>).</li>
+<li><b>OpenRouter OAuth</b>: Aider would store the key in plain text; the aliases supply <code>OPENROUTER_API_KEY</code> so this never triggers.</li>
+<li><b>Untrusted repos</b>: their <code>.aider.conf.yml</code>/<code>.env</code> can set commands or the API base — inspect them first.</li></ul>
+
+<h2>8. Validation</h2>
+<p>YAML and json5 files parse. The installer smoke test showed the config rendering with absolute paths for the temp HOME, 20 skills and 24 loaders installed, and <code>aider.op.env</code> at mode 0600. The conventions file retains all 277 checked items. Aider isn't installed here, so there was no live run.</p>
+
+<h2>9. Install</h2>
+<pre>uv tool install --force --python python3.12 --with pip aider-chat@latest
+cd ~/agent-configs/aider &amp;&amp; DRY_RUN=1 ./install.sh &amp;&amp; ./install.sh
+echo 'source ~/.aider/aider-aliases.sh' &gt;&gt; ~/.zshrc
+ggshield install --mode local          # per repo; plus copy templates/.aiderignore</pre>
+</body></html>

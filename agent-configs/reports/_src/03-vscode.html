@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>VS Code — configuration report</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="cover"><h1>VS Code (GitHub Copilot Chat) — Configuration Report</h1>
+<div class="sub">Prepared for <b>Murpheux</b> · 28 September 2026 · Verified against <b>VS Code 1.139.1</b> (installed) and Copilot Chat 0.68</div>
+<div class="sub">Folder: <code>~/agent-configs/vscode/</code> → <code>&lt;profile&gt;/</code> (settings, mcp.json, prompts) and <code>~/.copilot/</code> (shared core)</div></div>
+
+<h2>1. Summary</h2>
+<p>VS Code 1.139 runs two agent harnesses:</p>
+<ul><li><b>Local</b> reads profile settings, prompt files and <code>mcp.json</code>. It is slated for removal.</li>
+<li><b>Copilot</b> reads only <code>~/.copilot</code> and <code>~/.claude</code>.</li></ul>
+<p>The configuration therefore splits in two. The shared <code>~/.copilot</code> core (instructions, skills, guard hook, MCP) works in both harnesses and the CLI. VS Code-only pieces go in the profile: approvals, sandbox, prompt files and <code>mcp.json</code>.</p>
+<p>The router design had to adapt to one VS Code rule: <b>a subagent priced above its caller is refused</b>. The Router sits on the Medium tier and runs cheaper or equal-tier subagents. The premium Architect and Security run as <b>handoff buttons</b>, which you confirm.</p>
+<div class="kpi"><div><b>8</b>VS Code agents</div><div><b>16</b>prompt files</div><div><b>20</b>skills</div><div><b>17</b>terminal rules</div><div><b>5</b>MCP servers</div></div>
+
+<h2>2. Sources used</h2>
+<ul><li><code>microsoft/vscode-docs</code>: agent customization (instructions, prompt files, custom agents, skills, hooks, MCP, approvals, sandboxing, subagents, harnesses, language models) and release notes v1_118–v1_140.</li>
+<li><code>microsoft/vscode</code> source: the prompt validator, subagent tool, settings registry and Agent Host converters.</li>
+<li><b>github/awesome-copilot</b> and <b>awesome-copilot.github.com</b>; <code>github/docs</code> hooks reference and custom-agent configuration.</li></ul>
+
+<h2>3. What was built</h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>~/.copilot/agents/vscode-*.agent.md</code></td><td>Router, Explorer, Reviewer, Planner, Developer, SRE, Architect, Security. All are <code>target: vscode</code>, with model fallback arrays, <code>reasoning-effort</code>, tool aliases, an <code>agents</code> allow-list and <code>handoffs</code></td></tr>
+<tr><td><code>~/.copilot/instructions/murpheux.instructions.md</code></td><td>the same global instructions file as the CLI folder (<code>applyTo: "**"</code>)</td></tr>
+<tr><td><code>~/.copilot/skills/</code>, <code>hooks/</code>, <code>mcp-config.json</code>, <code>mcp.op.env</code></td><td>shared core: 20 skills, the guard hook (Copilot hook format, which the Local harness also reads), MCP for the Copilot harness, and 1Password references</td></tr>
+<tr><td><code>&lt;profile&gt;/settings.json</code> (merged)</td><td>AGENTS.md on, <code>useClaudeMdFile</code> off, maxRequests 60, nested subagents, terminal and edit auto-approve rules, sandbox, hooks, plugins, commit/review instructions</td></tr>
+<tr><td><code>&lt;profile&gt;/mcp.json</code></td><td>github (OAuth), context7 (via <code>op run</code>, so no <code>${input:}</code> is needed and the server is still forwarded to the Copilot harness), mslearn, awsdocs, terraform</td></tr>
+<tr><td><code>&lt;profile&gt;/prompts/*.prompt.md</code></td><td>16 prompt files (Local harness), each bound to the right agent. Cheap ones pin GPT-6 Luna</td></tr></table>
+
+<h2>4. Routing &amp; model tiers</h2>
+<table><tr><th>Agent</th><th>Model fallbacks</th><th>How it's reached</th></tr>
+<tr><td><b>Router</b></td><td>Claude Sonnet 5 → GPT-6 Sol → Auto</td><td>agent picker. Tools: agent, read, search, web, todo</td></tr>
+<tr><td>Explorer · Reviewer</td><td>GPT-6 Luna → Claude Haiku 4.5 → Auto</td><td>subagent (cheapest)</td></tr>
+<tr><td>Planner</td><td>GPT-6 Sol → Claude Sonnet 5 · medium</td><td>subagent</td></tr>
+<tr><td>Developer · SRE</td><td>Claude Sonnet 5 → GPT-6 Sol · medium</td><td>subagent, or the handoff "Implement with Developer"</td></tr>
+<tr><td>Architect · Security</td><td>Claude Opus 5.5 → GPT-6 Sol · high</td><td><b>handoff only</b> (premium tier)</td></tr></table>
+<p class="small">Billing is in AI credits (token-based since 2026-06-01; 1 credit = $0.01). Auto gets a 10% discount. Confirm the exact model names in <i>Chat: Manage Language Models</i>; each agent falls back to Auto if a name differs.</p>
+
+<h2>5. Guardrails</h2>
+<ol><li><b>Terminal auto-approve</b>: only read-only and validation commands run automatically. Push, IaC apply/destroy, cluster mutations, cloud CLIs and <code>.ps1</code> always ask. Workspace npm scripts are no longer auto-approved.</li>
+<li><b>Guard hook</b>: this is what actually <i>blocks</i>. Terminal rules only ask, and VS Code's docs say they are not a security boundary.</li>
+<li><b>Edit protection</b>: <code>.env*</code>, state and key files, workflows and <code>.ssh</code> always ask. VS Code already protects <code>.git/**</code>, lockfiles and <code>.vscode/*.json</code>.</li>
+<li><b>Sandbox</b>: on for macOS/Linux/WSL2 (WSL2 needs bubblewrap and socat); off on Windows, where it is experimental.</li>
+<li><b>Prompt injection</b>: web fetch is not eligible for auto-approval; <code>chat.useClaudeMdFile</code> is off to avoid duplicated or unexpected instructions.</li></ol>
+
+<h2>6. From awesome-copilot</h2>
+<ul><li><b>Install</b> via <code>@agentPlugins</code> (the marketplace is built in): csharp-dotnet-development, aws-/azure-cloud-development, devops-oncall, structured-autonomy.</li>
+<li><b>Adopted natively</b>:
+  <ul><li>rug-orchestrator → Router;</li>
+  <li>se-security-reviewer (made read-only), se-system-architecture-reviewer, aws-/azure-principal-architect → Security/Architect;</li>
+  <li>terraform-iac-reviewer and platform-sre-kubernetes → iac-review and SRE;</li>
+  <li>tool-guardian and secrets-scanner hooks → guard;</li>
+  <li>draw-io, threat-model-analyst, ADR and incident-postmortem skills → shared skills.</li></ul></li>
+<li><b>Avoided</b>: always-on <code>security-and-owasp.instructions.md</code> (1,088 lines), kept as an on-demand skill instead.</li></ul>
+
+<h2>7. Gotchas handled</h2>
+<ul><li>Prompt files don't run in the Copilot harness, so every command also exists as a skill (in the CLI folder).</li>
+<li><code>~/.copilot</code> doesn't settings-sync, and on Windows + WSL each harness reads its own host. Run <code>install.ps1</code> on Windows <i>and</i> <code>install.sh</code> in WSL.</li>
+<li>Profile MCP servers run on Windows even in WSL windows. The Mermaid renderer tool is Local-only.</li>
+<li>Agents from <code>~/.claude/agents</code> also appear in the Copilot harness if Claude Code is installed; see the final report's coexistence notes.</li></ul>
+
+<h2>8. Validation</h2>
+<p>The settings fragment (JSONC), <code>mcp.json</code>, all agents and all prompt frontmatter parse. The installer smoke test merged settings while keeping an existing key (<code>editor.fontSize</code>), installed 16 prompt files and <code>mcp.json</code>, and confirmed all 8 agents are <code>target: vscode</code>. <code>install.ps1</code> parses cleanly.</p>
+
+<h2>9. Install</h2>
+<pre>cd ~/agent-configs/vscode &amp;&amp; ./install.sh               # macOS / Linux / WSL (~/.copilot + remote machine settings)
+pwsh -File install.ps1                                   # Windows (copy the folder to a local drive first)
+# Reload VS Code → Chat → pick "Router" → Chat: Diagnostics to confirm agents/tools/hooks</pre>
+</body></html>

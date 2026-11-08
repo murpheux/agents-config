@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Cline — configuration report</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="cover"><h1>Cline — Configuration Report</h1>
+<div class="sub">Prepared for <b>Murpheux</b> · 28 September 2026 · Verified against <b>Cline extension 4.1.21</b> (legacy + next builds) and <b>Cline CLI 3.0.65</b></div>
+<div class="sub">Folder: <code>~/agent-configs/cline/</code> → <code>Documents/Cline/</code> (both builds) and <code>~/.cline/</code> (next + CLI)</div></div>
+
+<h2>1. Summary</h2>
+<p>Since 4.1.0 one extension package ships <b>two builds</b> with different config homes: <code>legacy</code> and SDK-based <code>next</code>, which shares everything with the CLI. The configuration targets both:</p>
+<ul><li><b>Both builds:</b> rules, workflows and hooks, in <code>Documents/Cline</code>, which both builds read.</li>
+<li><b>next + CLI:</b> skills, defined subagents, the guard and MCP, in <code>~/.cline</code>.</li></ul>
+<p>Routing uses Plan mode (strong model) and Act mode (workhorse), plus defined subagents. Cline subagents <b>don't inherit approval settings</b>, so every one is read-only by design; all mutations happen in the Act session, where approvals and the hook apply.</p>
+<div class="kpi"><div><b>4</b>read-only subagents</div><div><b>16</b>workflows</div><div><b>20</b>skills</div><div><b>2</b>hook launchers</div><div><b>5</b>MCP servers</div></div>
+
+<h2>2. Sources used</h2>
+<ul><li><code>cline/cline</code>: <code>main</code> (SDK, CLI, next) and the <code>legacy-extension</code> branch source, docs/ (rules, workflows, skills, hooks, MCP, plan-and-act, auto-approve, subagents, deprecations, CLI reference), and CHANGELOG. Also docs.cline.bot.</li>
+<li><b>JhonMA82/awesome-clinerules</b> (reviewed; see §6) and <code>cline/prompts</code>.</li></ul>
+
+<h2>3. What was built</h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>Documents/Cline/Rules/00-murpheux.md</code></td><td>full global instructions, with the router policy inlined because the main task is the router. This is the only always-on context</td></tr>
+<tr><td><code>Documents/Cline/Workflows/*.md</code></td><td>16 workflows (<code>/review.md</code>, <code>/plan.md</code>, <code>/security-scan.md</code>, …) with per-role instructions (Plan vs Act vs subagent)</td></tr>
+<tr><td><code>Documents/Cline/Hooks/PreToolUse</code> · <code>windows/PreToolUse.ps1</code></td><td>guard launchers for macOS/Linux/WSL and Windows; both accept the legacy (<code>preToolUse</code>) and next (<code>tool_call</code>) payloads</td></tr>
+<tr><td><code>~/.cline/agents/*.yaml</code></td><td>explorer and reviewer (LiteLLM <code>deepseek-flash</code>), architect (OpenRouter <code>openai/gpt-6-sol</code>), security (OpenRouter <code>anthropic/claude-opus-5.5</code>). Read-only tools only</td></tr>
+<tr><td><code>~/.cline/skills/</code>, <code>~/.cline/guard/</code></td><td>20 skills (about 100 tokens each until used) and the shared guard</td></tr>
+<tr><td><code>~/.cline/data/settings/cline_mcp_settings.json</code></td><td>github (Docker, read-only, 5 toolsets) and context7, both via <code>op run</code>; mslearn (streamableHttp); awsdocs; terraform</td></tr>
+<tr><td><code>~/.cline/cline.op.env</code>, <code>mcp.op.env</code></td><td>1Password references (<code>LITELLM_API_KEY</code>, <code>OPENROUTER_API_KEY</code>, MCP tokens) plus the legacy <code>CLINE_COMMAND_PERMISSIONS</code> deny list</td></tr>
+<tr><td><code>templates/</code></td><td><code>.clineignore</code> (legacy build) and a VS Code setting to pin the <code>next</code> build</td></tr></table>
+
+<h2>4. Routing &amp; tiers</h2>
+<table><tr><th>Role</th><th>Where</th><th>Model</th></tr>
+<tr><td>router · planner</td><td>Plan mode (only you switch Plan → Act)</td><td>OpenRouter <code>openai/gpt-6-sol</code> · high</td></tr>
+<tr><td>developer · sre</td><td>Act mode, approvals on</td><td>LiteLLM <code>claude-sonnet-5</code> · medium</td></tr>
+<tr><td>explorer · reviewer</td><td><code>subagent_explorer</code> / <code>subagent_reviewer</code></td><td>LiteLLM <code>deepseek-flash</code></td></tr>
+<tr><td>architect</td><td><code>subagent_architect</code></td><td>OpenRouter <code>openai/gpt-6-sol</code></td></tr>
+<tr><td>security</td><td><code>subagent_security</code></td><td>OpenRouter <code>anthropic/claude-opus-5.5</code></td></tr></table>
+<p class="small">Provider and model choices live in Cline's UI, not in files. The README lists the exact values. Keys stay out of <code>providers.json</code>, which is plaintext: launch VS Code or the CLI with <code>op run --env-file ~/.cline/cline.op.env -- code .</code>.</p>
+
+<h2>5. Guardrails</h2>
+<ol><li><b>Guard hook</b> on both builds cancels destructive, secret-reading, force-push and interactive commands, and secret-file access through <code>read_files</code>, <code>editor</code> and <code>apply_patch</code>. It was tested with both payload shapes and with Windows PowerShell.</li>
+<li><b>Read-only subagents</b>, because they bypass approvals.</li>
+<li><b>Approvals</b>: Edit and Execute set to require approval. <code>next</code> defaults to auto-approving edits and MCP, so this has to be changed in the UI.</li>
+<li><b>Legacy extras</b>: the <code>CLINE_COMMAND_PERMISSIONS</code> deny list (deny wins, with no allow list so everything else still prompts) and <code>.clineignore</code>, which is not a security boundary.</li>
+<li><b>Credentials</b>: MCP servers are launched through <code>op run</code>; providers read env keys, so nothing secret is stored.</li></ol>
+
+<h2>6. awesome-clinerules assessment</h2>
+<p>The list is a copy of awesome-cursorrules: 131 <code>.cursorrules</code> folders, last updated January 2025, and many files are squashed onto a single line. It has nothing for .NET, PowerShell, bash, Terraform/Ansible, cloud, security or diagrams, and its <code>globs:</code> frontmatter is ignored by Cline (which uses <code>paths:</code>).</p>
+<p><b>Ideas adopted</b> into the global rule and the skills:</p>
+<ul><li>verify before assuming, and make the minimal change;</li>
+<li>answer-length control (fewer output tokens);</li>
+<li>respect the existing architecture;</li>
+<li>stdlib-first Go;</li>
+<li>uv, ruff and pytest for Python;</li>
+<li>strict TypeScript;</li>
+<li>the project-notes / memory-bank pattern.</li></ul>
+<p>The gaps were filled from <code>cline/prompts</code> (security audit, Mermaid plans, memory bank) and the shared skills.</p>
+
+<h2>7. Gotchas handled</h2>
+<ul><li><b>Two builds, two config worlds</b>: files are placed where both builds read them, and pinning <code>next</code> is recommended.</li>
+<li><b>Linux Documents directory</b>: it is resolved via <code>xdg-user-dir</code>. On Windows <code>install.ps1</code> uses the real <code>MyDocuments</code> folder, which handles OneDrive redirection.</li>
+<li><b>Windows hooks</b>: only <code>PreToolUse.ps1</code> runs, and the Windows installer removes the POSIX launcher. Unsigned scripts on UNC paths are blocked, so the installer is run from a local copy.</li>
+<li><b>Defaults to watch</b>: the CLI defaults to <code>--auto-approve true</code>, and the <code>next</code> build dropped the per-tool MCP <code>autoApprove</code> list.</li></ul>
+
+<h2>8. Validation</h2>
+<p>All frontmatter and JSON parse; the 4 subagent definitions have the required keys. The installer smoke test showed the hook cancelling a force-push (next payload) and allowing <code>go test</code> (legacy payload), with MCP paths rendered. <b>On Windows</b>, the real <code>PreToolUse.ps1</code> blocked <code>Remove-Item -Recurse -Force C:\</code> and allowed <code>dotnet test</code>.</p>
+
+<h2>9. Install</h2>
+<pre>cd ~/agent-configs/cline &amp;&amp; DRY_RUN=1 ./install.sh &amp;&amp; ./install.sh     # macOS / WSL
+pwsh -File install.ps1                                               # Windows (from a local copy)
+op run --env-file ~/.cline/cline.op.env -- code .                    # launch with injected keys</pre>
+</body></html>

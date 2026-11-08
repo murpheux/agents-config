@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
+  "agent": "router",
+  "model": "sonnet",
+  "effortLevel": "medium",
+  "autoCompactWindow": 200000,
+  "cleanupPeriodDays": 30,
+  "enableAllProjectMcpServers": false,
+  "skipWebFetchPreflight": true,
+
+  "statusLine": {
+    "type": "command",
+    "command": "python3 \"$HOME/.claude/statusline.py\"",
+    "padding": 0
+  },
+
+  "env": {
+    "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1",
+    "BASH_MAX_OUTPUT_LENGTH": "20000",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2",
+    "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "4",
+    "DISABLE_TELEMETRY": "1",
+    "GIT_PAGER": "cat",
+    "PAGER": "cat"
+  },
+
+  "permissions": {
+    "defaultMode": "default",
+    "additionalDirectories": ["~/AI_Workspace"],
+    "allow": [
+      "Bash(git status *)", "Bash(git diff *)", "Bash(git log *)", "Bash(git show *)", "Bash(git blame *)",
+      "Bash(git --no-pager diff *)", "Bash(git --no-pager log *)", "Bash(git --no-pager show *)",
+      "Bash(git branch --list *)", "Bash(git branch -a *)", "Bash(git branch -v *)", "Bash(git branch --show-current)",
+      "Bash(git rev-parse *)", "Bash(git remote -v)", "Bash(git ls-files *)", "Bash(git stash list *)", "Bash(git tag --list *)",
+      "Bash(ls *)", "Bash(pwd)", "Bash(tree *)", "Bash(wc *)", "Bash(which *)", "Bash(file *)", "Bash(du -sh *)", "Bash(df -h *)",
+      "Bash(uname *)", "Bash(whoami)", "Bash(rg *)", "Bash(jq *)", "Bash(yq *)", "Bash(dig *)", "Bash(nslookup *)", "Bash(showmount -e *)",
+      "Bash(go build *)", "Bash(go test *)", "Bash(go vet *)", "Bash(go list *)", "Bash(gofmt -l *)", "Bash(golangci-lint run *)", "Bash(govulncheck *)",
+      "Bash(dotnet build *)", "Bash(dotnet test *)", "Bash(dotnet format --verify-no-changes *)", "Bash(dotnet list * package *)",
+      "Bash(pytest *)", "Bash(python -m pytest *)", "Bash(python3 -m pytest *)", "Bash(uv run pytest *)", "Bash(ruff check *)", "Bash(ruff format --check *)", "Bash(mypy *)", "Bash(pyright *)", "Bash(pip-audit *)",
+      "Bash(npm test *)", "Bash(npm run test *)", "Bash(npm run lint *)", "Bash(npm run typecheck *)", "Bash(npm run build *)", "Bash(npm ls *)", "Bash(npm audit *)",
+      "Bash(pnpm test *)", "Bash(pnpm lint *)", "Bash(yarn test *)", "Bash(npx tsc --noEmit *)", "Bash(npx biome check *)", "Bash(biome check *)",
+      "Bash(shellcheck *)", "Bash(shfmt -d *)", "Bash(make lint *)", "Bash(make test *)", "Bash(task lint *)", "Bash(task test *)", "Bash(just lint *)", "Bash(just test *)",
+      "PowerShell(Invoke-ScriptAnalyzer *)", "PowerShell(Invoke-Pester *)",
+      "Bash(terraform fmt *)", "Bash(terraform validate *)", "Bash(terraform version)", "Bash(terraform providers *)", "Bash(terraform state list *)",
+      "Bash(tofu fmt *)", "Bash(tofu validate *)", "Bash(tflint *)", "Bash(ansible-lint *)", "Bash(ansible-playbook --syntax-check *)",
+      "Bash(yamllint *)", "Bash(hadolint *)", "Bash(docker compose config *)",
+      "Bash(ggshield secret scan *)", "Bash(gitleaks detect *)", "Bash(trivy fs *)", "Bash(trivy config *)", "Bash(trivy image *)",
+      "Bash(semgrep scan *)", "Bash(checkov *)", "Bash(osv-scanner *)",
+      "Bash(gh pr view *)", "Bash(gh pr list *)", "Bash(gh pr diff *)", "Bash(gh pr checks *)", "Bash(gh issue view *)", "Bash(gh issue list *)",
+      "Bash(gh run list *)", "Bash(gh run view *)", "Bash(gh repo view *)",
+      "Bash(docker ps *)", "Bash(docker node ls *)", "Bash(docker service ls *)", "Bash(docker service ps *)", "Bash(docker stack ls *)",
+      "Bash(kubectl get *)", "Bash(kubectl describe *)", "Bash(kubectl logs *)", "Bash(kubectl top *)",
+      "Bash(xmllint --noout *)", "Bash(npx -y @mermaid-js/mermaid-cli *)", "Bash(d2 *)", "Bash(dot -T*)",
+      "mcp__github__get_*", "mcp__github__list_*", "mcp__github__search_*",
+      "mcp__context7__*", "mcp__mslearn__*", "mcp__awsdocs__*", "mcp__terraform__*",
+      "WebFetch(domain:learn.microsoft.com)", "WebFetch(domain:docs.aws.amazon.com)", "WebFetch(domain:registry.terraform.io)",
+      "WebFetch(domain:go.dev)", "WebFetch(domain:pkg.go.dev)", "WebFetch(domain:docs.python.org)", "WebFetch(domain:nodejs.org)",
+      "WebFetch(domain:kubernetes.io)", "WebFetch(domain:docs.docker.com)", "WebFetch(domain:github.com)", "WebFetch(domain:raw.githubusercontent.com)"
+    ],
+    "ask": [
+      "Bash(git commit *)", "Bash(terraform plan *)", "Bash(terraform apply *)", "Bash(kubectl kustomize *)",
+      "Bash(ansible-playbook *)", "Bash(docker stack deploy *)", "Bash(helm *)", "Bash(op plugin run *)", "Bash(op run *)"
+    ],
+    "deny": [
+      "Bash(git push *)", "Bash(git push)", "Bash(git reset --hard *)", "Bash(git clean -f*)", "Bash(git filter-branch *)",
+      "Bash(rm -rf /*)", "Bash(rm -rf ~*)", "Bash(rm -rf $HOME*)", "Bash(rm -fr /*)", "Bash(sudo rm *)", "Bash(srm *)",
+      "Bash(dd *)", "Bash(mkfs*)", "Bash(wipefs *)", "Bash(diskutil erase*)", "Bash(diskutil partitionDisk *)", "Bash(diskutil apfs deleteContainer *)",
+      "Bash(csrutil *)", "Bash(chmod -R 777 /*)", "Bash(chown -R * /)",
+      "Bash(terraform destroy *)", "Bash(tofu destroy *)", "Bash(terragrunt destroy *)", "Bash(* -auto-approve*)",
+      "Bash(aws s3 rb *)", "Bash(kubectl delete namespace *)", "Bash(kubectl delete ns *)", "Bash(docker system prune *)",
+      "Bash(op read *)", "Bash(op item get *)", "Bash(op document get *)", "Bash(op inject *)", "Bash(gh auth token*)",
+      "Bash(aws configure get *)", "Bash(aws configure export-credentials*)", "Bash(printenv*)", "Bash(env)",
+      "PowerShell(Format-Volume *)", "PowerShell(Clear-Disk *)", "PowerShell(Invoke-Expression *)",
+      "Read(~/.ssh/id_*)", "Read(~/.aws/credentials)", "Read(~/.kube/config)", "Read(~/.docker/config.json)",
+      "Read(~/.gnupg/**)", "Read(~/.config/op/**)", "Read(~/.claude/.credentials.json)", "Read(~/.codex/auth.json)",
+      "Read(~/.config/opencode/service.json)", "Read(~/.local/share/opencode/**)",
+      "Read(**/.env)", "Read(**/.env.local)", "Read(**/.env.production)", "Read(**/.env.development)",
+      "Read(**/*.tfstate)", "Read(**/*.tfstate.backup)", "Read(**/*.key)", "Read(**/*.pfx)", "Read(**/*.p12)", "Read(**/*.kdbx)",
+      "Edit(**/.env)", "Edit(**/.git/**)", "Edit(~/.ssh/**)", "Edit(~/.aws/**)", "Edit(**/*.tfstate)",
+      "mcp__onepassword"
+    ]
+  },
+
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Read|Edit|Write|MultiEdit|NotebookEdit|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/hooks/guard.py\" --format claude --main-thread-readonly",
+            "timeout": 15,
+            "statusMessage": "Guardrails check"
+          }
+        ]
+      }
+    ]
+  },
+
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": false,
+    "excludedCommands": ["docker *", "kubectl *", "helm *", "op *", "gh *", "aws *", "az *", "gcloud *", "terraform *", "tofu *", "ansible*", "ssh *", "scp *"],
+    "filesystem": {
+      "denyRead": ["~/.ssh", "~/.aws/credentials", "~/.gnupg", "~/.config/op", "~/.kube/config", "~/.docker/config.json"]
+    },
+    "network": {
+      "allowedDomains": [
+        "github.com", "*.github.com", "*.githubusercontent.com", "api.githubcopilot.com",
+        "registry.npmjs.org", "proxy.golang.org", "sum.golang.org", "pypi.org", "files.pythonhosted.org",
+        "api.nuget.org", "*.nuget.org", "registry.terraform.io", "releases.hashicorp.com",
+        "learn.microsoft.com", "docs.aws.amazon.com", "mcp.context7.com", "scarlet"
+      ]
+    }
+  }
+}

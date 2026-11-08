@@ -1,0 +1,26 @@
+@page { size: A4; margin: 15mm 13mm 17mm 13mm; }
+:root { --ink:#1b1f24; --muted:#57606a; --accent:#0b6e4f; --accent2:#7c3aed; --warn:#b54708; --crit:#b42318; --line:#d0d7de; --bg:#f6f8fa; }
+* { box-sizing: border-box; }
+body { font-family: "Segoe UI", Inter, Arial, sans-serif; color: var(--ink); font-size: 10pt; line-height: 1.45; margin: 0; }
+h1 { font-size: 21pt; margin: 0 0 4px; color: var(--accent); }
+h2 { font-size: 13.5pt; margin: 20px 0 8px; padding-bottom: 4px; border-bottom: 2px solid var(--accent); color: var(--accent); page-break-after: avoid; }
+h3 { font-size: 11pt; margin: 12px 0 5px; color: var(--accent2); page-break-after: avoid; }
+p { margin: 5px 0; }
+.sub { color: var(--muted); font-size: 9.6pt; }
+.cover { border-left: 6px solid var(--accent); padding: 10px 16px; background: var(--bg); margin-bottom: 12px; }
+table { width: 100%; border-collapse: collapse; margin: 7px 0 11px; font-size: 8.8pt; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid var(--line); padding: 4px 6px; vertical-align: top; text-align: left; }
+th { background: #eaeef2; font-weight: 600; }
+code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.4pt; background: #eff1f3; padding: 0 3px; border-radius: 3px; }
+pre { font-family: Consolas, "Cascadia Mono", monospace; font-size: 8.1pt; background: var(--bg); border: 1px solid var(--line); padding: 7px 9px; border-radius: 4px; white-space: pre-wrap; page-break-inside: avoid; }
+ul, ol { margin: 4px 0 8px 18px; padding: 0; } li { margin: 2px 0; }
+.kpi { display: flex; gap: 7px; margin: 9px 0; }
+.kpi div { flex: 1; border: 1px solid var(--line); border-radius: 6px; padding: 7px; background: #fff; font-size: 9pt; }
+.kpi b { display: block; font-size: 15pt; color: var(--accent); }
+.tag { display: inline-block; padding: 0 6px; border-radius: 8px; font-size: 7.8pt; font-weight: 600; color: #fff; }
+.crit { background: var(--crit); } .high { background: var(--warn); } .med { background: #b08800; } .low { background: #57606a; } .ok { background: var(--accent); }
+.note { border-left: 4px solid var(--warn); background: #fff8f0; padding: 6px 10px; margin: 8px 0; }
+.small { font-size: 8.4pt; color: var(--muted); }
+.pb { page-break-before: always; }
+.yes { color: var(--accent); font-weight: 600; } .no { color: var(--crit); font-weight: 600; } .part { color: var(--warn); font-weight: 600; }

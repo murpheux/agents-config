@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": { "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}" },
+      "tools": ["*"]
+    },
+    "mslearn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "tools": ["*"]
+    },
+    "awsdocs": {
+      "type": "local",
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": { "FASTMCP_LOG_LEVEL": "ERROR", "AWS_DOCUMENTATION_PARTITION": "aws" },
+      "tools": ["*"]
+    },
+    "terraform": {
+      "type": "local",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "hashicorp/terraform-mcp-server"],
+      "tools": ["*"]
+    }
+  }
+}

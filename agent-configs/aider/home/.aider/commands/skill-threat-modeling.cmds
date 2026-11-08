@@ -1,0 +1,2 @@
+# /load this file to add the 'threat-modeling' skill to the chat as read-only context
+/read-only ~/.aider/skills/threat-modeling/SKILL.md

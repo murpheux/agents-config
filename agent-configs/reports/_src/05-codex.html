@@ -1,0 +1,78 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Codex CLI — configuration report</title><link rel="stylesheet" href="style.css"></head><body>
+<div class="cover"><h1>OpenAI Codex CLI — Configuration Report</h1>
+<div class="sub">Prepared for <b>Murpheux</b> · 28 September 2026 · Verified against <b>Codex rust-v0.157.1</b> (config schema + source)</div>
+<div class="sub">Folder: <code>~/agent-configs/codex/</code> → installs to <code>~/.codex/</code> and <code>~/.agents/skills/</code></div></div>
+
+<h2>1. Summary</h2>
+<p>Codex 0.157 natively provides everything the design needs:</p>
+<ul><li><b>custom subagents</b> (<code>~/.codex/agents/*.toml</code>);</li>
+<li><b>profiles as separate files</b>;</li>
+<li>skills;</li>
+<li>stable <b>hooks</b> using the same JSON contract as the shared guard;</li>
+<li><b>Starlark exec-policy rules</b>;</li>
+<li>an OS sandbox;</li>
+<li>shell-environment <b>secret filtering</b>.</li></ul>
+<p>Custom prompts were <b>removed in 0.118</b>, so the 16 slash commands ship as explicit-only workflow skills (<code>$review</code>, <code>$plan</code>, …) in the Codex-only <code>~/.codex/skills</code>.</p>
+<div class="kpi"><div><b>7</b>custom agents</div><div><b>4</b>tier profiles</div><div><b>37</b>exec-policy rules</div><div><b>36</b>skills</div><div><b>5</b>MCP servers</div></div>
+
+<h2>2. Sources used</h2>
+<ul><li><code>openai/codex</code>: <code>codex-rs/core/config.schema.json@rust-v0.157.1</code>, the exec-policy parser and README, the skills loader, and the profiles/config loader. Also developers.openai.com/codex (config, rules, hooks, skills, subagents, models, Windows/WSL).</li>
+<li><b>RoggeOhta/awesome-codex-cli</b>: 271 resources.</li></ul>
+
+<h2>3. What was built</h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td><code>config.toml</code></td><td>the main thread on <code>gpt-6-sol</code> (medium; plan mode high); verbosity low; <code>review_model = gpt-6-luna</code>; compaction at 180k; <code>tool_output_token_limit 12000</code>; <code>project_doc_max_bytes 65536</code>; <code>[agents]</code> defaults (Luna, 4 threads, depth 1); <code>on-request</code> + <code>workspace-write</code> with network off; <code>shell_environment_policy</code> filters; the guard hook; notifications; providers (scarlet LiteLLM with <code>auth.command op read</code>, OpenRouter); MCP</td></tr>
+<tr><td><code>{cheap,deep,audit,gateway}.config.toml</code></td><td>Luna Q&amp;A; Sol xhigh; Astra read-only audit (approvals never); Agentgateway routing</td></tr>
+<tr><td><code>AGENTS.md</code></td><td>global instructions with the router policy inlined (33.5 KB; the cap is raised so it isn't truncated)</td></tr>
+<tr><td><code>agents/*.toml</code></td><td>explorer, reviewer (Luna), planner, developer, sre (Sol; sre has network), architect (Sol xhigh), security (Astra, read-only)</td></tr>
+<tr><td><code>rules/guardrails.rules</code></td><td>37 forbidden/prompt rules. There are deliberately no <code>allow</code> rules, because <code>allow</code> runs outside the sandbox</td></tr>
+<tr><td><code>hooks/guard.py</code> + <code>guardrails.json</code></td><td>PreToolUse guard for Bash, shell and apply_patch; it reads file paths out of patches</td></tr>
+<tr><td><code>~/.agents/skills</code> · <code>~/.codex/skills</code></td><td>20 portable skills · 16 workflow skills (<code>allow_implicit_invocation: false</code>)</td></tr></table>
+
+<h2>4. Tiers (OpenAI list prices per 1M tokens, input/output)</h2>
+<table><tr><th>Role</th><th>Model · effort</th><th>Price</th></tr>
+<tr><td>explorer, reviewer, unnamed helpers, <code>/review</code>, <code>--profile cheap</code></td><td>gpt-6-luna · medium/high</td><td>$0.10 / $0.50</td></tr>
+<tr><td>main thread, planner, developer, sre</td><td>gpt-6-sol · medium</td><td>$2 / $10</td></tr>
+<tr><td>architect, <code>--profile deep</code></td><td>gpt-6-sol · xhigh</td><td>$2 / $10 (more reasoning tokens)</td></tr>
+<tr><td>security, <code>--profile audit</code></td><td>gpt-6-astra · medium</td><td>$10 / $50 (HIGH_RISK only)</td></tr></table>
+<p class="small">Cached input is 10× cheaper, which is why AGENTS.md is kept as a stable prefix. <code>web_search = "cached"</code> is cheaper, and a smaller injection surface, than live search.</p>
+
+<h2>5. Guardrails (defence in depth)</h2>
+<ol><li><b>Sandbox</b>: <code>workspace-write</code> with network off by default (the sre agent enables network). <code>.git</code>, <code>.codex</code> and <code>.agents</code> stay read-only.</li>
+<li><b>Exec policy</b>:
+  <ul><li><code>forbidden</code>: disk wipes, root/home deletes, force-push and history rewrites, destroy, bucket deletion, secret printing.</li>
+  <li><code>prompt</code>: push, apply/import/state, cluster/swarm/helm mutations, opaque <code>bash -c</code> and PowerShell scripts, <code>ansible-playbook</code>.</li></ul></li>
+<li><b>Guard hook</b>: catches what argv prefixes miss (<code>git push origin -f</code>, pipes into interpreters, <code>.env</code>, interactive programs, patches touching secret files).</li>
+<li><b>Environment filtering</b>: the built-in <code>*KEY*/*SECRET*/*TOKEN*</code> excludes plus 1Password, PAT, gateway, OpenRouter and AWS secret variables.</li>
+<li><b>Credentials</b>: the gateway token comes from <code>op read</code> run by Codex itself, so it never enters model context.</li></ol>
+
+<h2>6. From awesome-codex-cli</h2>
+<table><tr><th>Entry</th><th>Decision</th></tr>
+<tr><td>VoltAgent/awesome-codex-subagents (terraform-engineer, kubernetes-specialist, sre-engineer, security-auditor…)</td><td>Adopted natively (our 7 agents); pinned models were replaced with our tiers</td></tr>
+<tr><td>feiskyer/codex-settings (profile files, LiteLLM config, hardened rules)</td><td>Adopted natively</td></tr>
+<tr><td>openai/skills (security-threat-model, gh-fix-ci, aspnet-core)</td><td>Install via <code>$skill-installer</code></td></tr>
+<tr><td>openai/codex-action, openai/codex-universal</td><td>Install for CI and outer container isolation</td></tr>
+<tr><td>shanraisshan/codex-cli-hooks, codex-cli-best-practice</td><td>Ported to the current hook schema → guard</td></tr>
+<tr><td>ccusage, tokscale</td><td>Install for cost reports</td></tr>
+<tr><td>hashicorp/terraform-mcp-server, awslabs/mcp, jgraph/drawio-mcp</td><td>The first two are configured; draw.io is optional</td></tr></table>
+
+<h2>7. Gotchas handled</h2>
+<ul><li><b>Removed or changed in 2026</b>:
+  <ul><li>prompts removed → workflow skills;</li>
+  <li>a top-level <code>profile =</code> is now an error → profile files;</li>
+  <li><code>approval_policy="untrusted"</code> and <code>wire_api="chat"</code> are hard errors, so neither is used.</li></ul></li>
+<li><b>Silent failures</b>:
+  <ul><li>unknown keys are ignored unless you run <code>codex --strict-config</code> (it's in the next steps);</li>
+  <li>untrusted repos load no AGENTS.md;</li>
+  <li>the default 32 KiB instructions cap would truncate AGENTS.md, so it was raised.</li></ul></li>
+<li><b>Hooks</b> must be trusted once in <code>/hooks</code>.</li>
+<li><b>Rules</b> are prefix-only, so the hook covers reordered flags. Skill trees are CRLF-normalised, because CRLF breaks shebangs.</li></ul>
+
+<h2>8. Validation</h2>
+<p>All 12 TOML files parse. The 37 rules were executed with stubs and every <code>match</code>/<code>not_match</code> example was verified. The guard handles argv arrays and <code>apply_patch</code> payloads (70 self-tests). The installer smoke test confirmed the hook command points at the installed guard, 20 + 16 skills are in place, and the hook exits 2 on a force-push.</p>
+
+<h2>9. Install</h2>
+<pre>cd ~/agent-configs/codex &amp;&amp; DRY_RUN=1 ./install.sh &amp;&amp; ./install.sh
+codex login &amp;&amp; codex --strict-config          # then /hooks → trust the guard
+codex execpolicy check --pretty --rules ~/.codex/rules/guardrails.rules -- terraform destroy</pre>
+</body></html>

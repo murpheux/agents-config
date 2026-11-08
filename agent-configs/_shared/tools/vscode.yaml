@@ -1,0 +1,68 @@
+# Build spec for VS Code 1.139+ (GitHub Copilot Chat agent mode). Renders into vscode/home/.
+# Shares ~/.copilot (instructions, skills, hooks) with the Copilot CLI folder — identical files. Adds VS Code-flavoured
+# agents (target: vscode, handoffs, model fallbacks) and profile-level prompt files, settings and mcp.json.
+placeholders_from: github-copilot-cli
+copy_files:
+  - {from: github-copilot-cli/home/.copilot/mcp-config.json, to: home/.copilot/mcp-config.json}
+  - {from: github-copilot-cli/home/.copilot/hooks/guard.json, to: home/.copilot/hooks/guard.json}
+instructions:
+  - out: home/.copilot/instructions/murpheux.instructions.md
+    header: |
+      ---
+      name: murpheux-global
+      description: Murpheux's global instructions — identity, stack, conventions, security guardrails, agent routing and cost rules.
+      applyTo: "**"
+      ---
+skills_out:
+  - home/.copilot/skills
+guard_out:
+  - home/.copilot/hooks
+router_subs:
+  ROUTER_CAPABILITIES: |
+    You are the **Router** custom agent in VS Code. Your tools are read/search/web/todo plus the **agent** tool — you cannot edit or run commands. Answer SIMPLE requests from reading; run **Explorer, Reviewer, Planner, Developer, SRE** as subagents (they get no chat history — pass a complete brief). **Architect** and **Security** run on a premium model, and VS Code refuses subagents priced above you, so offer them as **handoffs** (buttons) for Murpheux to confirm.
+  DELEGATION_NOTES: |
+    - Subagents are stateless: include the relevant diff, paths and findings in every brief.
+    - Prefer Explorer (cheapest) for discovery; send meaningful diffs to Reviewer, HIGH_RISK work to the Security handoff.
+agents:
+  - id: router
+    out: home/.copilot/agents/vscode-router.agent.md
+    frontmatter:
+      name: Router
+      description: 'Primary orchestrator: triage every request, answer SIMPLE ones, delegate to Explorer/Planner/Developer/Reviewer/SRE, escalate architecture and security via handoffs.'
+      target: vscode
+      argument-hint: 'Goal + constraints'
+      model: ['Claude Sonnet 5 (copilot)', 'GPT-6 Sol (copilot)', 'Auto (copilot)']
+      reasoning-effort: medium
+      tools: [agent, read, search, web, todo]
+      agents: [Explorer, Reviewer, Planner, Developer, SRE]
+      handoffs:
+        - {label: 'Escalate: architecture review', agent: Architect, prompt: 'Design or review the approach discussed above. Follow your output template; end with a hand-off block for Developer.', send: false}
+        - {label: 'Escalate: security review (HIGH_RISK)', agent: Security, prompt: 'Independently review the change/plan above as the HIGH_RISK security reviewer. Return the findings table and whether it is safe to execute.', send: false}
+        - {label: 'Implement with Developer', agent: Developer, prompt: 'Implement the plan above. Validate with the project build/test/lint and report in the standard format.', send: false}
+  - id: explorer
+    out: home/.copilot/agents/vscode-explorer.agent.md
+    frontmatter: {name: Explorer, description: "Read-only repo/infra exploration for find/where/how-does questions.", target: vscode, user-invocable: false, model: ['GPT-6 Luna (copilot)', 'Claude Haiku 4.5 (copilot)', 'Auto (copilot)'], tools: [read, search, web]}
+  - id: reviewer
+    out: home/.copilot/agents/vscode-reviewer.agent.md
+    frontmatter: {name: Reviewer, description: "Cheap independent review of a diff for correctness, regressions, missing tests and obvious security issues.", target: vscode, model: ['GPT-6 Luna (copilot)', 'Claude Haiku 4.5 (copilot)', 'Auto (copilot)'], tools: [read, search, execute]}
+  - id: planner
+    out: home/.copilot/agents/vscode-planner.agent.md
+    frontmatter: {name: Planner, description: "Decomposes complex requests into a short executable plan. Read-only.", target: vscode, model: ['GPT-6 Sol (copilot)', 'Claude Sonnet 5 (copilot)'], reasoning-effort: medium, tools: [read, search, web, agent], agents: [Explorer]}
+  - id: developer
+    out: home/.copilot/agents/vscode-developer.agent.md
+    frontmatter: {name: Developer, description: "Implements code, scripts, IaC and CI/CD and validates with build/test/lint.", target: vscode, model: ['Claude Sonnet 5 (copilot)', 'GPT-6 Sol (copilot)'], reasoning-effort: medium, agents: [Explorer], handoffs: [{label: 'Review these changes', agent: Reviewer, prompt: 'Review the changes just made (run git diff).', send: false}]}
+  - id: sre
+    out: home/.copilot/agents/vscode-sre.agent.md
+    frontmatter: {name: SRE, description: "Live-system diagnosis: incidents, Docker Swarm, Kubernetes, cloud, CI/CD failures. Read-only first; mutations need approval.", target: vscode, model: ['Claude Sonnet 5 (copilot)', 'GPT-6 Sol (copilot)'], reasoning-effort: medium, tools: [execute, read, search, web, agent], agents: [Explorer]}
+  - id: architect
+    out: home/.copilot/agents/vscode-architect.agent.md
+    frontmatter: {name: Architect, description: "Solution & cloud architecture, trade-offs, ADRs, diagrams, hard root cause (premium).", target: vscode, model: ['Claude Opus 5.5 (copilot)', 'GPT-6 Sol (copilot)'], reasoning-effort: high, tools: [read, search, web, edit, agent], agents: [Explorer], handoffs: [{label: 'Hand off to Developer', agent: Developer, prompt: 'Implement the hand-off block above.', send: false}]}
+  - id: security
+    out: home/.copilot/agents/vscode-security.agent.md
+    frontmatter: {name: Security, description: "Independent security review: threat models, IAM, secrets, supply chain, OWASP; HIGH_RISK reviewer (premium).", target: vscode, model: ['Claude Opus 5.5 (copilot)', 'GPT-6 Sol (copilot)'], reasoning-effort: high, tools: [read, search, execute, web]}
+commands:
+  format: vscode
+  out: home/vscode-profile/prompts
+  args_token: "${input:target:target or focus}"
+  roles: {explorer: Router, reviewer: Reviewer, planner: Planner, developer: Developer, sre: SRE, architect: Architect, security: Security}
+  cheap_model: "GPT-6 Luna (copilot)"

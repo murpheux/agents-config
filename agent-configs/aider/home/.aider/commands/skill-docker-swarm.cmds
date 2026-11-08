@@ -1,0 +1,2 @@
+# /load this file to add the 'docker-swarm' skill to the chat as read-only context
+/read-only ~/.aider/skills/docker-swarm/SKILL.md

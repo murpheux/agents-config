@@ -1,0 +1,50 @@
+// ~/.copilot/settings.json FRAGMENT — merged (not replaced) by install.sh / install.ps1.
+// Keys verified against `copilot help config` (v1.0.61) and the CLI configuration-directory reference.
+{
+  "model": "claude-sonnet-5",
+  "effortLevel": "medium",
+
+  // Per-agent model tiers (custom agents + cheap built-ins). Router's own model is in router.agent.md.
+  "subagents": {
+    "agents": {
+      "explorer":        { "model": "gpt-5-mini",       "effortLevel": "low" },
+      "reviewer":        { "model": "claude-haiku-4.5", "effortLevel": "medium" },
+      "planner":         { "model": "gpt-5.5",          "effortLevel": "medium" },
+      "developer":       { "model": "claude-sonnet-5",  "effortLevel": "medium" },
+      "sre":             { "model": "claude-sonnet-5",  "effortLevel": "medium" },
+      "architect":       { "model": "gpt-5.5",          "effortLevel": "high" },
+      "security":        { "model": "claude-opus-4.8",  "effortLevel": "high" },
+      "explore":         { "model": "gpt-5-mini",       "effortLevel": "low" },
+      "task":            { "model": "gpt-5-mini",       "effortLevel": "low" },
+      "code-review":     { "model": "claude-haiku-4.5", "effortLevel": "medium" },
+      "general-purpose": { "model": "claude-sonnet-5",  "effortLevel": "medium" }
+    },
+    "maxConcurrency": 4,
+    "maxDepth": 2
+  },
+
+  // Safety
+  "askUser": true,
+  "continueOnAutoMode": false,
+  "permissions": { "disableBypassPermissionsMode": "allow-auto-only" },
+  "remote": "off",
+  "remoteExport": false,
+  "includeCoAuthoredBy": true,
+  "deniedUrls": [
+    "pastebin.com", "*.pastebin.com", "hastebin.com", "transfer.sh", "0x0.st",
+    "webhook.site", "*.webhook.site", "requestbin.net", "*.requestcatcher.com",
+    "*.ngrok.io", "*.ngrok-free.app", "*.trycloudflare.com"
+  ],
+  "sandbox": {
+    "enabled": true,
+    "allowBypass": true,
+    "userPolicy": {
+      "deniedPaths": ["~/.ssh", "~/.aws", "~/.gnupg", "~/.config/op", "~/.kube/config", "~/.docker/config.json", "~/.claude/.credentials.json", "~/.codex/auth.json"],
+      "network": { "allowLocalNetwork": true }
+    }
+  },
+
+  // Visibility of spend
+  "footer": { "showModelEffort": true, "showContextWindow": true, "showAiUsed": true, "showAgent": true, "showSandbox": true },
+  "notifications": true
+}

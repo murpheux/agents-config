@@ -1,0 +1,7 @@
+# ~/.codex/gateway.config.toml — `codex --profile gateway`: route through Agentgateway (LiteLLM).
+# Model ids must exist on the gateway. For non-OpenAI models behind LiteLLM set model_context_window
+# and disable web search (hosted tools are OpenAI-only).
+model_provider = "scarlet"
+model = "gpt-6-luna"
+model_reasoning_effort = "high"
+web_search = "disabled"

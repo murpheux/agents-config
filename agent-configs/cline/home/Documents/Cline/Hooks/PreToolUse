@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Cline PreToolUse hook (legacy + next builds, macOS/Linux/WSL). Delegates to the shared guard.
+# Contract: JSON payload on stdin; one JSON line on stdout {"cancel":bool,"errorMessage"|"contextModification"}.
+# Fails OPEN (allows) only if python3/guard are missing, and says so in the task context.
+set -uo pipefail
+GUARD="${CLINE_GUARD:-$HOME/.cline/guard/guard.py}"
+if ! command -v python3 >/dev/null 2>&1 || [[ ! -f "$GUARD" ]]; then
+  printf '%s\n' '{"cancel":false,"contextModification":"WARNING: Cline guard hook is not active (python3 or guard.py missing). Apply the global guardrails manually."}'
+  exit 0
+fi
+out="$(python3 "$GUARD" --format cline)"
+[[ -n "$out" ]] && printf '%s\n' "$out" || printf '%s\n' '{"cancel":false}'

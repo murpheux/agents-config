@@ -1,0 +1,4 @@
+name: "code-validator"
+harness:
+  type: "oz" # or "claude"
+model: "claude-3-5-sonnet"

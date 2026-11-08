@@ -1,0 +1,4 @@
+{
+  "_comment": "Merge into VS Code user settings (install.sh prints this; the rest of Cline's settings live in the extension UI). Pinning the build keeps config locations predictable: next = ~/.cline (shared with the CLI).",
+  "cline.rollout.bundleOverride": "next"
+}

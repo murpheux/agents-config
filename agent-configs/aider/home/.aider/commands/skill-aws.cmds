@@ -1,0 +1,2 @@
+# /load this file to add the 'aws' skill to the chat as read-only context
+/read-only ~/.aider/skills/aws/SKILL.md

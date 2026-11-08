@@ -1,0 +1,67 @@
+// VS Code USER settings fragment (Copilot Chat agent mode, VS Code 1.139+). Merged into
+// <profile>/settings.json by install.sh / install.ps1 — your existing settings are preserved.
+{
+  // Instructions: ~/.copilot/instructions/murpheux.instructions.md is loaded by both harnesses.
+  "chat.useAgentsMdFile": true,
+  "chat.useNestedAgentsMdFiles": true,
+  "chat.useClaudeMdFile": false,              // avoid loading ~/.claude/CLAUDE.md a second time (same content)
+  "chat.useClaudeHooks": false,
+  "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+
+  // Agents & subagents
+  "chat.agent.maxRequests": 60,
+  "chat.subagents.allowInvocationsFromSubagents": true,   // Planner/Developer/SRE may call Explorer
+  "chat.subagents.defaultToAuto": false,                   // our agents pin their own models
+
+  // Approvals — `true` auto-approves, `false` means ASK (the guard hook is what actually blocks)
+  "chat.tools.global.autoApprove": false,
+  "chat.tools.terminal.autoApproveWorkspaceNpmScripts": false,
+  "chat.tools.terminal.blockDetectedFileWrites": "outsideWorkspace",
+  "chat.tools.terminal.autoApprove": {
+    "/^git (status|diff|log|show|blame|ls-files|rev-parse)\\b/": true,
+    "/^git --no-pager (diff|log|show)\\b/": true,
+    "/^(go (build|test|vet|list)|gofmt -l|golangci-lint run|govulncheck)\\b/": true,
+    "/^dotnet (build|test|format --verify-no-changes)\\b/": true,
+    "/^(uv run )?(pytest|ruff check|ruff format --check|mypy|pyright)\\b/": true,
+    "/^(npm (test|run (test|lint|typecheck|build))|npx (tsc --noEmit|biome check))\\b/": true,
+    "/^(shellcheck|shfmt -d|yamllint|hadolint|tflint|ansible-lint)\\b/": true,
+    "/^(terraform|tofu) (fmt|validate|version)\\b/": true,
+    "/^(ggshield secret scan|gitleaks detect|trivy (fs|config)|semgrep scan|checkov)\\b/": true,
+    "/^(kubectl (get|describe|logs|top)|helm (list|status)|docker (ps|service (ls|ps)|stack (ls|ps)|node ls))\\b/": true,
+    "/^(rg|ls|pwd|wc|which|dig|nslookup)\\b/": true,
+    "/^(git push|git reset --hard|git clean)\\b/": false,
+    "/^(terraform|tofu) (apply|destroy|import|state)\\b/": false,
+    "/^(kubectl (apply|delete|drain|scale|patch|edit|exec)|helm (install|upgrade|uninstall|rollback))\\b/": false,
+    "/^docker (stack|service) (rm|update|scale)\\b/": false,
+    "/^(op|aws|az|gcloud|ansible-playbook|ssh|scp)\\b/": false,
+    "/\\.ps1\\b/i": { "approve": false, "matchCommandLine": true }
+  },
+  "chat.tools.edits.autoApprove": {
+    "**/.env": false,
+    "**/.env.*": false,
+    "**/*.{tfvars,tfstate,pem,key,pfx,p12}": false,
+    "**/.github/workflows/**": false,
+    "**/.ssh/**": false
+  },
+  "chat.tools.eligibleForAutoApproval": { "fetch": false },
+
+  // Terminal sandbox (macOS / Linux / WSL2 preview; WSL2 needs bubblewrap + socat)
+  "chat.agent.sandbox.enabled": "on",
+  "chat.agent.sandbox.enabledWindows": "off",
+  "chat.agent.sandbox.allowUnsandboxedCommands": true,
+
+  // Hooks (guard lives in ~/.copilot/hooks, shared with the Copilot CLI)
+  "chat.useHooks": true,
+
+  // MCP & plugins
+  "chat.mcp.access": "all",
+  "chat.plugins.enabled": true,
+
+  // Commit / review guidance
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    { "text": "Conventional Commits: type(scope): imperative summary ≤ 72 chars; blank line; body explains why. Never include secrets." }
+  ],
+  "github.copilot.chat.reviewSelection.instructions": [
+    { "text": "Flag secrets, injection, IAM wildcards, public exposure, missing encryption, missing tests. Cite file:line; no style nits." }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "github": {
+      "type": "stdio",
+      "command": "op",
+      "args": ["run", "--env-file", "__HOME__/.cline/mcp.op.env", "--", "docker", "run", "-i", "--rm",
+               "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "-e", "GITHUB_READ_ONLY=1",
+               "-e", "GITHUB_TOOLSETS=repos,issues,pull_requests,actions,code_security",
+               "ghcr.io/github/github-mcp-server"],
+      "disabled": false,
+      "timeout": 60,
+      "autoApprove": []
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "op",
+      "args": ["run", "--env-file", "__HOME__/.cline/mcp.op.env", "--", "npx", "-y", "@upstash/context7-mcp"],
+      "disabled": false,
+      "timeout": 60,
+      "autoApprove": []
+    },
+    "mslearn": {
+      "type": "streamableHttp",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "disabled": false,
+      "timeout": 60,
+      "autoApprove": []
+    },
+    "awsdocs": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["awslabs.aws-documentation-mcp-server@latest"],
+      "env": { "FASTMCP_LOG_LEVEL": "ERROR", "AWS_DOCUMENTATION_PARTITION": "aws" },
+      "disabled": false,
+      "timeout": 60,
+      "autoApprove": []
+    },
+    "terraform": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "hashicorp/terraform-mcp-server"],
+      "disabled": false,
+      "timeout": 60,
+      "autoApprove": []
+    }
+  }
+}

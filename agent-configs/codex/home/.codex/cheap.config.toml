@@ -1,0 +1,5 @@
+# ~/.codex/cheap.config.toml — `codex --profile cheap`: router/Q&A/triage on the cheap tier.
+model = "gpt-6-luna"
+model_reasoning_effort = "high"
+model_verbosity = "low"
+web_search = "cached"

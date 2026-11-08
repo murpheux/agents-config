@@ -1,0 +1,2 @@
+# /load this file to add the 'dotnet' skill to the chat as read-only context
+/read-only ~/.aider/skills/dotnet/SKILL.md

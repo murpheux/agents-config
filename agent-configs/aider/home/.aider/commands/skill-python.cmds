@@ -1,0 +1,2 @@
+# /load this file to add the 'python' skill to the chat as read-only context
+/read-only ~/.aider/skills/python/SKILL.md

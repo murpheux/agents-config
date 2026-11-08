@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'><title>Model recommendations</title><link rel='stylesheet' href='style.css'><style>@page { size: A4 landscape; margin: 12mm; } td:nth-child(7), td:nth-child(8) { white-space: nowrap; letter-spacing: -1px; }</style></head><body><div class='cover'><h1>Model recommendations per agent — cost · speed · capability</h1>
+<div class='sub'><i>Prepared for Murpheux · 28 Sep 2026 · applies to the router/specialist team in every config under <code>~/agent-configs</code>.</i></div></div>
+<p><b>Prices</b> are $ per 1M tokens (input / cached / output), from GitHub's Copilot price table (<code>github/docs</code> → <code>data/tables/copilot/models-and-pricing.yml</code>, the providers' list prices). DeepSeek V4 Flash is from third-party price trackers. <b>Effective cost</b> = cost of one typical call under the token profile shown for each agent (reasoning tokens are billed as output), plus the cost per 100 calls. <b>Speed</b> and <b>capability</b> are relative ratings (●●●●● = best) based on model class and tier. They are guidance, not benchmarks.</p>
+<h2>Quick answer (#1 pick per agent)</h2>
+<table><tr><th>Agent</th><th>#1 pick</th><th>Effort</th><th>Effective cost / call</th><th>Currently configured</th></tr>
+<tr><td><b>router</b></td><td>GPT-6 Luna</td><td>medium</td><td>$0.0009</td><td>DeepSeek V4 Flash</td></tr>
+<tr><td><b>explorer</b></td><td>GPT-6 Luna</td><td>low</td><td>$0.0036</td><td>DeepSeek V4 Flash</td></tr>
+<tr><td><b>reviewer</b></td><td>GPT-6 Luna</td><td>high</td><td>$0.0035</td><td>DeepSeek V4 Flash</td></tr>
+<tr><td><b>planner</b></td><td>GPT-6 Sol</td><td>medium</td><td>$0.118</td><td>GPT-6 Sol ✔</td></tr>
+<tr><td><b>developer</b></td><td>Claude Sonnet 5</td><td>medium</td><td>$0.412</td><td>Claude Sonnet 5 ✔</td></tr>
+<tr><td><b>sre</b></td><td>Claude Sonnet 5</td><td>medium</td><td>$0.258</td><td>Claude Sonnet 5 ✔</td></tr>
+<tr><td><b>architect</b></td><td>GPT-6 Sol</td><td>high/xhigh</td><td>$0.286</td><td>GPT-6 Sol ✔</td></tr>
+<tr><td><b>security</b></td><td>Claude Opus 5.5</td><td>high</td><td>$0.508</td><td>Claude Opus 5.5 ✔</td></tr>
+</table>
+<h2>Per-agent top 5 (in order of preference)</h2>
+<h3>router — Triage every request, answer SIMPLE ones, delegate</h3>
+<p>Token profile per call: <b>15,000 input</b> (85% cached) · <b>700 output</b> + <b>300 reasoning</b> · frequency: every turn.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>GPT-6 Luna</b></td><td>medium</td><td>$0.1 / $0.01 / $0.5</td><td>$0.0009</td><td>$0.085</td><td>●●●●●</td><td>●●●○○</td><td>Near-lowest cost (DeepSeek is ~30% cheaper per call here), faster, and a stronger instruction-follower. Ideal for high-frequency triage</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>2</td><td><b>DeepSeek V4 Flash</b> <i>(current)</i></td><td>—</td><td>$0.14 / $0.0028 / $0.28</td><td>$0.0006</td><td>$0.063</td><td>●●●●○</td><td>●●●○○</td><td>Current router. Cheapest per call because of its 98% cache discount on the stable system prompt; a little slower</td><td>gateway (<code>deepseek-flash</code>)</td></tr>
+<tr><td>3</td><td><b>Gemini 3.8 Flash</b></td><td>low</td><td>$0.75 / $0.075 / $3.75</td><td>$0.0064</td><td>$0.639</td><td>●●●●●</td><td>●●●○○</td><td>Fastest option with more reasoning headroom for ambiguous requests</td><td>Copilot · gateway</td></tr>
+<tr><td>4</td><td><b>Claude Haiku 4.5</b></td><td>—</td><td>$1 / $0.1 / $5</td><td>$0.0085</td><td>$0.852</td><td>●●●●●</td><td>●●●○○</td><td>Most reliable tool-calling and delegation; ~10× the cost of Luna</td><td>Claude Code · Copilot · gateway</td></tr>
+<tr><td>5</td><td><b>GPT-5 mini</b></td><td>low</td><td>$0.25 / $0.025 / $2</td><td>$0.0029</td><td>$0.288</td><td>●●●●○</td><td>●●○○○</td><td>Fallback on Copilot plans where the newer lightweight models are unavailable</td><td>Copilot CLI</td></tr>
+</table>
+<h3>explorer — Read-only codebase/doc search</h3>
+<p>Token profile per call: <b>40,000 input</b> (40% cached) · <b>1,500 output</b> + <b>500 reasoning</b> · frequency: several per task.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>GPT-6 Luna</b></td><td>low</td><td>$0.1 / $0.01 / $0.5</td><td>$0.0036</td><td>$0.356</td><td>●●●●●</td><td>●●●○○</td><td>Input-heavy work at the lowest price</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>2</td><td><b>DeepSeek V4 Flash</b> <i>(current)</i></td><td>—</td><td>$0.14 / $0.0028 / $0.28</td><td>$0.0040</td><td>$0.396</td><td>●●●●○</td><td>●●●○○</td><td>Equally cheap; 1M-token context for large repos</td><td>gateway (<code>deepseek-flash</code>)</td></tr>
+<tr><td>3</td><td><b>Gemini 3.8 Flash</b></td><td>low</td><td>$0.75 / $0.075 / $3.75</td><td>$0.027</td><td>$2.67</td><td>●●●●●</td><td>●●●○○</td><td>Fastest large-context reads when accuracy matters more</td><td>Copilot · gateway</td></tr>
+<tr><td>4</td><td><b>GPT-5.6 Luna</b></td><td>low</td><td>$0.2 / $0.02 / $1.2</td><td>$0.0075</td><td>$0.752</td><td>●●●●●</td><td>●●●○○</td><td>Stable previous-gen fallback</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>5</td><td><b>Qwen3-Coder 30B (local)</b></td><td>—</td><td>free (local)</td><td>$0 (hardware)</td><td>$0 (hardware)</td><td>●●○○○</td><td>●●○○○</td><td>No token cost for private repos; slower, so for background exploration only</td><td>Ollama on medusa</td></tr>
+</table>
+<h3>reviewer — Independent diff review</h3>
+<p>Token profile per call: <b>25,000 input</b> (30% cached) · <b>1,800 output</b> + <b>1,500 reasoning</b> · frequency: per meaningful diff.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>GPT-6 Luna</b></td><td>high</td><td>$0.1 / $0.01 / $0.5</td><td>$0.0035</td><td>$0.347</td><td>●●●●●</td><td>●●●○○</td><td>Cheap, and a different model family from the Sonnet developer, which makes the review more independent</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>2</td><td><b>Gemini 3.8 Flash</b></td><td>medium</td><td>$0.75 / $0.075 / $3.75</td><td>$0.026</td><td>$2.61</td><td>●●●●●</td><td>●●●○○</td><td>Also a different family; better at subtle logic, still cheap</td><td>Copilot · gateway</td></tr>
+<tr><td>3</td><td><b>DeepSeek V4 Flash</b> <i>(current)</i></td><td>—</td><td>$0.14 / $0.0028 / $0.28</td><td>$0.0034</td><td>$0.340</td><td>●●●●○</td><td>●●●○○</td><td>Current reviewer; cheapest; fine for routine diffs</td><td>gateway (<code>deepseek-flash</code>)</td></tr>
+<tr><td>4</td><td><b>Claude Haiku 4.5</b></td><td>—</td><td>$1 / $0.1 / $5</td><td>$0.035</td><td>$3.48</td><td>●●●●●</td><td>●●●○○</td><td>Precise and fast; same family as the developer</td><td>Claude Code · Copilot · gateway</td></tr>
+<tr><td>5</td><td><b>Kimi K2.7 Code</b></td><td>—</td><td>$0.95 / $0.19 / $4</td><td>$0.031</td><td>$3.12</td><td>●●●○○</td><td>●●●●○</td><td>Code specialist; good at bug-spotting; flat-rate via Ollama cloud</td><td>Copilot · gateway (Ollama cloud)</td></tr>
+</table>
+<h3>planner — Short executable plans</h3>
+<p>Token profile per call: <b>35,000 input</b> (50% cached) · <b>3,000 output</b> + <b>5,000 reasoning</b> · frequency: COMPLEX work only.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>GPT-6 Sol</b> <i>(current)</i></td><td>medium</td><td>$2 / $0.2 / $10</td><td>$0.118</td><td>$11.85</td><td>●●●○○</td><td>●●●●●</td><td>Best reasoning per dollar (current planner)</td><td>Copilot · Codex · OpenRouter</td></tr>
+<tr><td>2</td><td><b>Claude Sonnet 5</b></td><td>medium</td><td>$2 / $0.2 / $10</td><td>$0.118</td><td>$11.85</td><td>●●●○○</td><td>●●●●●</td><td>Same price; strongest at repo-grounded plans</td><td>Claude Code · Copilot · gateway</td></tr>
+<tr><td>3</td><td><b>GPT-5.6 Terra</b></td><td>medium</td><td>$2 / $0.2 / $12</td><td>$0.135</td><td>$13.45</td><td>●●●○○</td><td>●●●●○</td><td>Solid versatile alternative at the same input price</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>4</td><td><b>Grok 4.7</b></td><td>—</td><td>$2 / $0.5 / $6</td><td>$0.092</td><td>$9.18</td><td>●●●●○</td><td>●●●○○</td><td>Cheapest output in this tier; verify plan quality on your repos</td><td>Copilot</td></tr>
+<tr><td>5</td><td><b>Claude Opus 5.5</b></td><td>medium</td><td>$4 / $0.2 / $20</td><td>$0.234</td><td>$23.35</td><td>●●○○○</td><td>●●●●●</td><td>For HIGH_RISK plans where a wrong decomposition is costly</td><td>Claude Code · Copilot · OpenRouter</td></tr>
+</table>
+<h3>developer — Implementation + validation (agentic, multi-step)</h3>
+<p>Token profile per call: <b>250,000 input</b> (75% cached) · <b>15,000 output</b> + <b>10,000 reasoning</b> · frequency: per task.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>Claude Sonnet 5</b> <i>(current)</i></td><td>medium</td><td>$2 / $0.2 / $10</td><td>$0.412</td><td>$41.25</td><td>●●●○○</td><td>●●●●●</td><td>Best agentic coding value (current developer)</td><td>Claude Code · Copilot · gateway</td></tr>
+<tr><td>2</td><td><b>GPT-6 Sol</b></td><td>medium</td><td>$2 / $0.2 / $10</td><td>$0.412</td><td>$41.25</td><td>●●●○○</td><td>●●●●●</td><td>Same price; excellent at Go/C#/Python; strong at tests</td><td>Copilot · Codex · OpenRouter</td></tr>
+<tr><td>3</td><td><b>Kimi K2.7 Code</b></td><td>—</td><td>$0.95 / $0.19 / $4</td><td>$0.195</td><td>$19.50</td><td>●●●○○</td><td>●●●●○</td><td>About 2× cheaper and coding-tuned; flat-rate via Ollama cloud; for NORMAL tasks</td><td>Copilot · gateway (Ollama cloud)</td></tr>
+<tr><td>4</td><td><b>GPT-5.3-Codex</b></td><td>medium</td><td>$1.75 / $0.175 / $14</td><td>$0.492</td><td>$49.22</td><td>●●●○○</td><td>●●●●○</td><td>Coding-tuned, but expensive output; good for large refactors</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>5</td><td><b>Claude Opus 5.5</b></td><td>medium</td><td>$4 / $0.2 / $20</td><td>$0.787</td><td>$78.75</td><td>●●○○○</td><td>●●●●●</td><td>Escalation for the hardest implementations; 2× Sonnet</td><td>Claude Code · Copilot · OpenRouter</td></tr>
+</table>
+<h3>sre — Live-system diagnosis (log/command-output heavy)</h3>
+<p>Token profile per call: <b>150,000 input</b> (60% cached) · <b>6,000 output</b> + <b>6,000 reasoning</b> · frequency: per incident.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>Claude Sonnet 5</b> <i>(current)</i></td><td>medium</td><td>$2 / $0.2 / $10</td><td>$0.258</td><td>$25.80</td><td>●●●○○</td><td>●●●●●</td><td>Most reliable multi-step tool use under uncertainty (current)</td><td>Claude Code · Copilot · gateway</td></tr>
+<tr><td>2</td><td><b>GPT-6 Sol</b></td><td>medium</td><td>$2 / $0.2 / $10</td><td>$0.258</td><td>$25.80</td><td>●●●○○</td><td>●●●●●</td><td>Same price; strong root-cause reasoning</td><td>Copilot · Codex · OpenRouter</td></tr>
+<tr><td>3</td><td><b>Gemini 3.8 Flash</b></td><td>medium</td><td>$0.75 / $0.075 / $3.75</td><td>$0.097</td><td>$9.68</td><td>●●●●●</td><td>●●●○○</td><td>Cheap first-pass triage of large logs; escalate if unclear</td><td>Copilot · gateway</td></tr>
+<tr><td>4</td><td><b>Kimi K2.7 Code</b></td><td>—</td><td>$0.95 / $0.19 / $4</td><td>$0.122</td><td>$12.21</td><td>●●●○○</td><td>●●●●○</td><td>Budget option for scripted, routine checks</td><td>Copilot · gateway (Ollama cloud)</td></tr>
+<tr><td>5</td><td><b>Claude Opus 5.5</b></td><td>high</td><td>$4 / $0.2 / $20</td><td>$0.498</td><td>$49.80</td><td>●●○○○</td><td>●●●●●</td><td>Major incidents where time-to-root-cause matters more than cost</td><td>Claude Code · Copilot · OpenRouter</td></tr>
+</table>
+<h3>architect — Design, trade-offs, ADRs, hard root cause</h3>
+<p>Token profile per call: <b>60,000 input</b> (50% cached) · <b>7,000 output</b> + <b>15,000 reasoning</b> · frequency: EXPERT work only.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>GPT-6 Sol</b> <i>(current)</i></td><td>high/xhigh</td><td>$2 / $0.2 / $10</td><td>$0.286</td><td>$28.60</td><td>●●●○○</td><td>●●●●●</td><td>Deep reasoning at workhorse prices (current architect)</td><td>Copilot · Codex · OpenRouter</td></tr>
+<tr><td>2</td><td><b>Claude Opus 5.5</b></td><td>high</td><td>$4 / $0.2 / $20</td><td>$0.566</td><td>$56.60</td><td>●●○○○</td><td>●●●●●</td><td>Premium design quality and writing; ~2× Sol</td><td>Claude Code · Copilot · OpenRouter</td></tr>
+<tr><td>3</td><td><b>Claude Sonnet 5</b></td><td>high</td><td>$2 / $0.2 / $10</td><td>$0.286</td><td>$28.60</td><td>●●●○○</td><td>●●●●●</td><td>Budget architecture for well-understood domains</td><td>Claude Code · Copilot · gateway</td></tr>
+<tr><td>4</td><td><b>GPT-6 Astra</b></td><td>medium</td><td>$10 / $1 / $50</td><td>$1.43</td><td>$143.00</td><td>●○○○○</td><td>●●●●●</td><td>Hardest distributed-systems and scale problems; ~5× Sol</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>5</td><td><b>Claude Fable 5.1</b></td><td>high</td><td>$10 / $0.25 / $50</td><td>$1.41</td><td>$140.75</td><td>●●○○○</td><td>●●●●●</td><td>Rare, highest-stakes designs; the most expensive model</td><td>Claude Code · Copilot</td></tr>
+</table>
+<h3>security — Threat models, IAM/vuln review, HIGH_RISK review</h3>
+<p>Token profile per call: <b>80,000 input</b> (50% cached) · <b>5,000 output</b> + <b>12,000 reasoning</b> · frequency: HIGH_RISK / security only.</p>
+<table><tr><th>#</th><th>Model</th><th>Effort</th><th>$/1M in / cached / out</th><th>Effective cost / call</th><th>per 100 calls</th><th>Speed</th><th>Capability</th><th>Why</th><th>Available via</th></tr>
+<tr><td>1</td><td><b>Claude Opus 5.5</b> <i>(current)</i></td><td>high</td><td>$4 / $0.2 / $20</td><td>$0.508</td><td>$50.80</td><td>●●○○○</td><td>●●●●●</td><td>Most rigorous careful reviewer (current security agent)</td><td>Claude Code · Copilot · OpenRouter</td></tr>
+<tr><td>2</td><td><b>GPT-6 Sol</b></td><td>high</td><td>$2 / $0.2 / $10</td><td>$0.258</td><td>$25.80</td><td>●●●○○</td><td>●●●●●</td><td>A different family from the Sonnet developer; ~½ the cost of Opus 5.5</td><td>Copilot · Codex · OpenRouter</td></tr>
+<tr><td>3</td><td><b>GPT-6 Astra</b></td><td>medium</td><td>$10 / $1 / $50</td><td>$1.29</td><td>$129.00</td><td>●○○○○</td><td>●●●●●</td><td>Maximum rigor for production IAM/data changes</td><td>Copilot · Codex · gateway</td></tr>
+<tr><td>4</td><td><b>Claude Fable 5.1</b></td><td>high</td><td>$10 / $0.25 / $50</td><td>$1.26</td><td>$126.00</td><td>●●○○○</td><td>●●●●●</td><td>Top-tier second opinion for critical changes only</td><td>Claude Code · Copilot</td></tr>
+<tr><td>5</td><td><b>Claude Sonnet 5</b></td><td>high</td><td>$2 / $0.2 / $10</td><td>$0.258</td><td>$25.80</td><td>●●●○○</td><td>●●●●●</td><td>Budget security pass for low-exposure changes</td><td>Claude Code · Copilot · gateway</td></tr>
+</table>
+<h2>How the ranking was made</h2>
+<ul>
+<li><b>Preference order</b> balances capability for the role first (a router that mis-routes, or a reviewer that misses bugs, costs more than it saves), then effective cost, then speed.</li>
+<li><b>Cheap roles</b> (router, explorer, reviewer) run on nearly every turn, so they favour the lowest effective cost with adequate tool-use reliability.</li>
+<li><b>Workhorse roles</b> (developer, sre, planner) favour agentic reliability at the $2/$10 tier.</li>
+<li><b>Premium roles</b> (architect, security) favour depth of reasoning; they run only for EXPERT or HIGH_RISK work.</li>
+<li><b>Independence</b>: reviewer and security picks favour a different model family from the developer (Sonnet 5), which makes the review more independent.</li>
+<li><b>Caching</b> dominates long agentic sessions. The developer profile assumes 75% of input is cached; in that case output and reasoning tokens drive the bill.</li>
+<li><b>Flat-rate options</b> (Ollama cloud models via the gateway, local Ollama) have no per-token cost within plan limits. The table shows their list price or $0, so compare them with your subscription.</li>
+</ul>
+<h2>Recommended changes to the current configs</h2>
+<ul>
+<li><b>router / explorer</b>: consider <b>GPT-6 Luna</b> where available (Copilot, Codex, VS Code). It costs about the same as DeepSeek V4 Flash (the router pays slightly more because Flash's cached input is ~4× cheaper) and is typically faster; keep DeepSeek V4 Flash on the gateway (OpenCode, Aider, Cline).</li>
+<li><b>reviewer</b>: move from DeepSeek V4 Flash to <b>GPT-6 Luna (high)</b> or <b>Gemini 3.8 Flash</b> where available, for better bug-finding at still-trivial cost.</li>
+<li><b>developer</b>: keep <b>Claude Sonnet 5</b>. Use <b>Kimi K2.7 Code</b> (flat-rate via Ollama cloud) for NORMAL tasks to roughly halve spend.</li>
+<li><b>security</b>: keep <b>Claude Opus 5.5</b> for HIGH_RISK work; <b>GPT-6 Sol (high)</b> is a strong, cheaper, different-family reviewer for routine security passes.</li>
+<li><b>architect</b>: keep <b>GPT-6 Sol</b>; escalate to <b>Opus 5.5</b> or <b>Astra</b> only for the hardest designs.</li>
+</ul></body></html>

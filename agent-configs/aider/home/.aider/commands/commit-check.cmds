@@ -1,0 +1,3 @@
+# /load ~/.aider/commands/commit-check.cmds — secret-scan staged work before Aider (or you) commits.
+/run ggshield secret scan pre-commit
+/run git --no-pager diff --cached --stat

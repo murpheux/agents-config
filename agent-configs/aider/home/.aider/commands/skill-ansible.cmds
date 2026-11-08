@@ -1,0 +1,2 @@
+# /load this file to add the 'ansible' skill to the chat as read-only context
+/read-only ~/.aider/skills/ansible/SKILL.md

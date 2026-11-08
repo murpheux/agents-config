@@ -1,0 +1,88 @@
+# Build spec for GitHub Copilot CLI (v1.0.6x). Renders into github-copilot-cli/home/.copilot.
+# ~/.copilot is shared with VS Code's Copilot agent harness; agents here are target: github-copilot so VS Code
+# shows only its own flavour (vscode/ folder, target: vscode). Instructions/skills/hooks are identical in both folders.
+instructions:
+  - out: home/.copilot/instructions/murpheux.instructions.md
+    header: |
+      ---
+      name: murpheux-global
+      description: Murpheux's global instructions — identity, stack, conventions, security guardrails, agent routing and cost rules.
+      applyTo: "**"
+      ---
+skills_out:
+  - home/.copilot/skills
+guard_out:
+  - home/.copilot/hooks
+body_subs:
+  DEV_PERMISSIONS: "Read-only commands may be auto-approved; everything else follows the approval prompts, and the preToolUse guard hook (plus managed deny rules when installed) blocks destructive and secret-reading operations."
+router_subs:
+  ROUTER_CAPABILITIES: |
+    You are the **`router` custom agent** (start with `copilot --agent router`, alias `cop`). Your tools are read/search/web/todo and the **agent** tool only — you cannot edit or run shell commands, so you answer SIMPLE requests from reading and delegate everything else to the custom agents: `explorer`, `reviewer`, `planner`, `developer`, `sre`, `architect`, `security` (per-agent models and effort live in `~/.copilot/settings.json` → `subagents.agents`). Built-ins you may also use: `/review`, `/security-review`, `/plan`, `/research`, `/fleet` for parallel subagents.
+  DELEGATION_NOTES: |
+    - Dispatch independent subagents in parallel (`/fleet` or several agent calls); keep `explorer`/`reviewer` on the cheap tier.
+    - Follow-ups on the same work: continue the same subagent task (`/tasks`) instead of starting a new one.
+    - Watch spend with the footer (AI credits) and `/usage`; `--max-ai-credits` caps a session.
+placeholders:
+  TOOL_NOTE: |
+    > **GitHub Copilot note:** this file lives in `~/.copilot/instructions/` and is loaded for every session by the Copilot CLI and by VS Code (both its Local and Copilot agent harnesses). Keep project rules in `.github/copilot-instructions.md` / `AGENTS.md`. Custom agents are target-scoped: `target: github-copilot` for the CLI flavour, `target: vscode` for the VS Code flavour.
+  TOOL_ENFORCEMENT_SUMMARY: |
+    the `preToolUse` guard hook (`~/.copilot/hooks/guard.json` → `guard.py` + `guardrails.json`; exit 2 denies, crashes fail closed), the CLI sandbox with denied credential paths, `deniedUrls`, `permissions.disableBypassPermissionsMode`, optional root-owned `managed-settings.json` deny/ask/allow rules, and in VS Code the terminal/edit auto-approve rules and agent sandbox
+  TOOL_ENFORCEMENT_TEXT: |
+    The Copilot guard hook, managed permission rules and approval prompts are authoritative.
+  TOOL_INTERACTIVE: |
+    The guard hook blocks interactive programs (editors, pagers, bare REPLs).
+  TOOL_TEAM: |
+    **Copilot CLI** (`copilot --agent router`, alias `cop`) — custom agents in `~/.copilot/agents/*.agent.md` (`target: github-copilot`), models/effort in `settings.json` → `subagents.agents`:
+
+    | Agent | Model · effort | Tools |
+    |---|---|---|
+    | `router` | `gpt-5-mini` | agent, read, search, web, todo (no edit/shell) |
+    | `explorer` | `gpt-5-mini` · low | read, search, web |
+    | `reviewer` | `claude-haiku-4.5` · medium | read, search, execute |
+    | `planner` | `gpt-5.5` · medium | read, search, web, agent |
+    | `developer` | `claude-sonnet-5` · medium | all |
+    | `sre` | `claude-sonnet-5` · medium | execute, read, search, web, agent |
+    | `architect` | `gpt-5.5` · high | read, search, web, edit, agent |
+    | `security` | `claude-opus-4.8` · high | read, search, execute, web |
+
+    **VS Code** (agent picker → **Router**) — agents `~/.copilot/agents/vscode-*.agent.md` (`target: vscode`): Router (Claude Sonnet 5) runs Explorer/Reviewer (GPT-6 Luna), Planner (GPT-6 Sol), Developer/SRE (Claude Sonnet 5) as subagents; Architect and Security (Claude Opus 5.5) are **handoffs**, because VS Code refuses subagents priced above the caller.
+
+    Workflow skills (both): `commit`, `test`, `explain`, `summarize`, `scaffold`, `security-scan`, `iac-review`, `threat-model`, `write-adr`, `incident`, `cost-review`, `diagram`, `image` (plus built-in `/review`, `/security-review`, `/plan`, `/pr`). VS Code also has the 16 prompt files (`/review`, `/plan`, …).
+  TOOL_APPROVALS: |
+    How GitHub Copilot enforces this: the CLI prompts for tools, paths and URLs not yet approved (never use `--yolo`; `disableBypassPermissionsMode` blocks allow-all flags); VS Code auto-approves only the read-only terminal commands listed in settings and asks for edits to protected files; the shared guard hook denies destructive, secret-reading and interactive commands and secret-file access in both; the CLI sandbox hides credential directories from shell commands; `--secret-env-vars` (in the `cop` alias) strips gateway/API tokens from shell and MCP environments.
+agents:
+  - id: router
+    out: home/.copilot/agents/router.agent.md
+    frontmatter:
+      name: router
+      description: Primary orchestrator. Classifies each request, answers SIMPLE ones from reading, and delegates everything else to the cheapest capable custom agent.
+      target: github-copilot
+      model: gpt-5-mini
+      tools: [agent, read, search, web, todo]
+  - id: explorer
+    out: home/.copilot/agents/explorer.agent.md
+    frontmatter: {name: explorer, description: "Fast read-only codebase/doc search for 'where/how is X' questions needing more than ~3 lookups.", target: github-copilot, tools: [read, search, web]}
+  - id: reviewer
+    out: home/.copilot/agents/reviewer.agent.md
+    frontmatter: {name: reviewer, description: "Cheap independent review of a diff for correctness, regressions, missing tests and obvious security issues.", target: github-copilot, tools: [read, search, execute]}
+  - id: planner
+    out: home/.copilot/agents/planner.agent.md
+    frontmatter: {name: planner, description: "Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan. Read-only.", target: github-copilot, tools: [read, search, web, agent]}
+  - id: developer
+    out: home/.copilot/agents/developer.agent.md
+    frontmatter: {name: developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint.", target: github-copilot}
+  - id: sre
+    out: home/.copilot/agents/sre.agent.md
+    frontmatter: {name: sre, description: "SRE/DevOps for live systems: incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures. Read-only diagnosis first.", target: github-copilot, tools: [execute, read, search, web, agent]}
+  - id: architect
+    out: home/.copilot/agents/architect.agent.md
+    frontmatter: {name: architect, description: "Solution & cloud architecture, distributed systems, migrations, trade-offs, ADRs and diagrams; hard root-cause analysis.", target: github-copilot, tools: [read, search, web, edit, agent]}
+  - id: security
+    out: home/.copilot/agents/security.agent.md
+    frontmatter: {name: security, description: "Security specialist: threat models, IAM/policy review, secrets/supply-chain/vuln review; independent reviewer for HIGH_RISK changes. Read-only; runs scanners.", target: github-copilot, tools: [read, search, execute, web]}
+commands:
+  format: skill
+  out: home/.copilot/skills
+  skip: [review, plan, pr]            # built-in /review, /plan, /pr cover these
+  invoke_hint: "\"use the {sid} skill\""
+  delegate: "Delegate the work to the `{{ROLE}}` custom agent (agent tool) with a self-contained brief (GOAL, CONTEXT, CONSTRAINTS, ACCEPTANCE, RETURN), then summarise its result."

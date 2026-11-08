@@ -1,0 +1,70 @@
+# Build spec for OpenAI Codex CLI (rust-v0.157.x). Rendered by _shared/build.py into codex/home/.
+instructions:
+  - out: home/.codex/AGENTS.md
+skills_out:
+  - home/.agents/skills            # Codex user skills dir (~/.codex/skills is deprecated); also read by Copilot CLI
+guard_out:
+  - home/.codex/hooks
+body_subs:
+  DEV_PERMISSIONS: "You run in the `workspace-write` sandbox with network off; anything needing network or paths outside the workspace asks for approval, and the exec-policy rules plus the guard hook block destructive and secret-reading commands."
+router_subs:
+  ROUTER_CAPABILITIES: |
+    In Codex the **main thread is the router**. Specialists are custom agents in `~/.codex/agents/*.toml`; spawn one with a self-contained brief when the routing table says so (Codex only spawns subagents when instructed). Workflow skills (`$review`, `$plan`, `$security-scan`, …) encode the common paths.
+  DELEGATION_NOTES: |
+    - Spawn independent subagents in parallel (max 4 concurrent, depth 1). Keep explorer/reviewer on the cheap tier.
+    - For follow-ups on the same work, continue the existing agent thread (`/agent`) instead of spawning a fresh one.
+placeholders:
+  TOOL_NOTE: |
+    > **Codex note:** this is `~/.codex/AGENTS.md`, loaded before any project `AGENTS.md` (root → cwd, one per directory, `AGENTS.override.md` wins). `project_doc_max_bytes` is raised to 64 KiB in `config.toml` so this file and project files are not truncated. Untrusted projects contribute no AGENTS.md.
+  TOOL_ENFORCEMENT_SUMMARY: |
+    the Codex sandbox (`workspace-write`, network off), `approval_policy = "on-request"`, Starlark exec-policy rules in `~/.codex/rules/guardrails.rules`, the PreToolUse guard hook (`~/.codex/hooks/guard.py` + `guardrails.json`), and `shell_environment_policy` secret filtering
+  TOOL_ENFORCEMENT_TEXT: |
+    The Codex sandbox, exec-policy rules and the guard hook are authoritative.
+  TOOL_INTERACTIVE: |
+    The guard hook blocks interactive programs (editors, pagers, bare REPLs).
+  TOOL_TEAM: |
+    | Agent | Where | Model · effort | Sandbox |
+    |---|---|---|---|
+    | main thread = router | `config.toml` | `gpt-6-sol` · medium (plan mode: high) | workspace-write |
+    | `explorer` | `~/.codex/agents/explorer.toml` | `gpt-6-luna` · medium | read-only |
+    | `reviewer` | `agents/reviewer.toml` | `gpt-6-luna` · high | read-only |
+    | `planner` | `agents/planner.toml` | `gpt-6-sol` · medium | read-only |
+    | `developer` | `agents/developer.toml` | `gpt-6-sol` · medium | workspace-write |
+    | `sre` | `agents/sre.toml` | `gpt-6-sol` · medium | workspace-write + network |
+    | `architect` | `agents/architect.toml` | `gpt-6-sol` · xhigh | workspace-write (docs only) |
+    | `security` | `agents/security.toml` | `gpt-6-astra` · medium (premium, HIGH_RISK only) | read-only |
+
+    Session tiers via profile files: `codex --profile cheap` (Luna, Q&A/triage), `--profile deep` (Sol xhigh), `--profile audit` (read-only security review), `--profile gateway` (Agentgateway/LiteLLM instead of OpenAI). Workflow skills: `$review`, `$commit`, `$plan`, `$test`, `$explain`, `$summarize`, `$pr`, `$scaffold`, `$security-scan`, `$iac-review`, `$threat-model`, `$write-adr`, `$incident`, `$cost-review`, `$diagram`, `$image`.
+
+    @@ROUTER@@
+  TOOL_APPROVALS: |
+    How Codex enforces this: commands run inside the `workspace-write` sandbox without prompting; network access, writes outside the workspace and anything the exec-policy marks `prompt` (git push, terraform apply, kubectl/helm mutations, swarm removals, complex `bash -c` scripts) ask first; `forbidden` rules and the guard hook block destructive, secret-reading and interactive commands outright; `.git`, `.codex` and `.agents` stay read-only even in workspace-write; secrets are filtered out of the shell environment.
+agents:
+  - id: explorer
+    out: home/.codex/agents/explorer.toml
+    toml: {name: explorer, description: "Fast read-only codebase/doc search. Use for 'where/how is X' questions needing more than ~3 lookups.", model: gpt-6-luna, model_reasoning_effort: medium, sandbox_mode: read-only}
+  - id: reviewer
+    out: home/.codex/agents/reviewer.toml
+    toml: {name: reviewer, description: "Cheap independent read-only review of a diff for correctness, regressions, missing tests and obvious security issues.", model: gpt-6-luna, model_reasoning_effort: high, sandbox_mode: read-only}
+  - id: planner
+    out: home/.codex/agents/planner.toml
+    toml: {name: planner, description: "Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan. Read-only.", model: gpt-6-sol, model_reasoning_effort: medium, sandbox_mode: read-only}
+  - id: developer
+    out: home/.codex/agents/developer.toml
+    toml: {name: developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint.", model: gpt-6-sol, model_reasoning_effort: medium, sandbox_mode: workspace-write}
+  - id: sre
+    out: home/.codex/agents/sre.toml
+    toml: {name: sre, description: "SRE/DevOps for live systems: incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures. Read-only diagnosis first; mutations need approval.", model: gpt-6-sol, model_reasoning_effort: medium, sandbox_mode: workspace-write, sandbox_workspace_write: {network_access: true}}
+  - id: architect
+    out: home/.codex/agents/architect.toml
+    toml: {name: architect, description: "Solution & cloud architecture, distributed systems, migrations, trade-off decisions, ADRs and diagrams; hard root-cause analysis.", model: gpt-6-sol, model_reasoning_effort: xhigh, sandbox_mode: workspace-write}
+  - id: security
+    out: home/.codex/agents/security.toml
+    toml: {name: security, description: "Security specialist: threat models, IAM/policy review, secrets/supply-chain/vuln review; independent reviewer for HIGH_RISK changes. Read-only; runs scanners.", model: gpt-6-astra, model_reasoning_effort: medium, sandbox_mode: read-only}
+commands:
+  format: skill
+  out: home/.codex/skills          # Codex-only dir (deprecated but loaded) so other tools reading ~/.agents/skills don't see Codex workflows
+  invoke: "$"
+  invoke_hint: "`${sid}`"
+  codex_explicit_only: true
+  delegate: "Delegate the work to the `{{ROLE}}` subagent with a self-contained brief (GOAL, CONTEXT, CONSTRAINTS, ACCEPTANCE, RETURN), then summarise its result."

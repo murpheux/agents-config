@@ -1,0 +1,5 @@
+# /load ~/.aider/commands/security-review.cmds — independent security review (ask mode, premium model).
+/chat-mode ask
+/read-only ~/.aider/skills/threat-modeling/SKILL.md
+/run git --no-pager diff --stat HEAD && git --no-pager diff HEAD
+/ask Act as the security specialist from CONVENTIONS.md. Review the diff above (and the files in chat) for IAM/least-privilege, secrets handling, encryption at rest/in transit, network exposure, OWASP Top 10, supply chain and unsafe IaC defaults. Return the findings table: | # | Severity | Location | Issue | Impact | Fix | Confidence |, then "Required before approval" and "Residual risk". Never print secret values.

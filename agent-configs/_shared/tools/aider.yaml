@@ -1,0 +1,33 @@
+# Build spec for Aider (v0.86.x). Rendered by _shared/build.py into aider/home/.
+instructions:
+  - out: home/.aider/CONVENTIONS.md
+skills_out:
+  - home/.aider/skills
+skill_cmds_out: home/.aider/commands
+skill_cmds_prefix: "~/.aider/skills"
+placeholders:
+  TOOL_NOTE: |
+    > **Aider note:** this file is loaded read-only on every request via `read:` in `~/.aider.conf.yml` and is prompt-cached (`cache-prompts: true`). Aider has no subagents, hooks or MCP; the roles in §14 map to Aider chat modes, model aliases and shell wrappers, and guardrails are enforced by Aider options (no shell suggestions, no auto-yes, pre-commit hooks honoured) plus `.aiderignore`.
+  TOOL_ENFORCEMENT_SUMMARY: |
+    Aider options in `~/.aider.conf.yml` (`suggest-shell-commands: false`, `yes-always: false`, `detect-urls: false`, `git-commit-verify: true`), `.aiderignore` / global gitignore for secret files, and the `ggshield` pre-commit hook
+  TOOL_ENFORCEMENT_TEXT: |
+    Aider only runs shell commands that Murpheux types (`/run`, `/test`) or confirms, and never sees files that are not added to the chat or are ignored.
+  TOOL_INTERACTIVE: |
+    Aider runs `/run` and `/test` through `$SHELL -i -c`; prefer non-interactive forms so the command returns.
+  TOOL_TEAM: |
+    Aider has one agent loop, so the router is Murpheux + these modes/aliases (defined in `~/.aider/aider-aliases.sh`):
+
+    | Role | How in Aider | Model tier |
+    |---|---|---|
+    | router / quick answers | `ai-ask` (`--chat-mode ask`) or `/ask` | cheap (`openai/deepseek-flash`) |
+    | explorer | `/ask` + `/map`, `/context` mode to pick files | cheap |
+    | planner + architect | `ai-arch` (`--architect`) or `/architect` — main model plans, editor model applies | reasoning (`openrouter/openai/gpt-6-sol`) → workhorse editor |
+    | developer | `ai` (default `code` mode) | workhorse (`openai/claude-sonnet-5`, reasoning medium) |
+    | reviewer | `ai-review` / `/load ~/.aider/commands/review.cmds` (ask mode on the diff) | cheap |
+    | security | `ai-sec` / `/load ~/.aider/commands/security-review.cmds` (ask mode) | premium (`openrouter/anthropic/claude-opus-5.5`) |
+    | sre | `ai-ask` with `/run` output (read-only commands only) | workhorse |
+    | commit messages, history summaries | weak model (automatic) | cheap |
+
+    Skills are loaded on demand with `/read-only ~/.aider/skills/<id>/SKILL.md` (or `/load ~/.aider/commands/skill-<id>.cmds`) — never add them all at once.
+  TOOL_APPROVALS: |
+    How Aider enforces this: Aider edits only files explicitly added to the chat; shell commands run only when Murpheux types `/run`/`/test` or confirms a suggestion (suggestions are disabled); auto-commits create one reversible commit per change (`/undo`), pre-existing uncommitted work is never auto-committed (`dirty-commits: false`), commits run pre-commit hooks (`git-commit-verify: true`, ggshield), and secret files are excluded via `.aiderignore` / the global gitignore.

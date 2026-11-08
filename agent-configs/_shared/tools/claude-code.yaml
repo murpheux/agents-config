@@ -1,0 +1,126 @@
+# Build spec for Claude Code (v2.1.28x). Rendered by _shared/build.py into claude-code/home/.
+instructions:
+  - out: home/.claude/CLAUDE.md
+skills_out:
+  - home/.claude/skills
+guard_out:
+  - home/.claude/hooks
+body_subs:
+  DEV_PERMISSIONS: "Read-only and validation commands are pre-approved; other shell commands and edits follow the permission prompts, and the guard hook plus `permissions.deny` block destructive and secret-reading operations."
+router_subs:
+  ROUTER_CAPABILITIES: |
+    You are the **main-session agent** (`"agent": "router"` in `~/.claude/settings.json`) running on Haiku. The guard hook blocks Edit/Write/Bash on the main thread, so you **read, search and delegate**: use Read/Grep/Glob/WebFetch for SIMPLE answers and the **Agent tool** for everything else. Specialists: `Explore` (Haiku), `reviewer` (Haiku), `developer` and `sre` (Sonnet), `planner`, `architect`, `security` (Opus).
+  DELEGATION_NOTES: |
+    - Launch independent subagents in parallel (several Agent calls in one turn); max 4 concurrent, nesting depth 2.
+    - Follow-ups on the same work: resume the specialist with SendMessage (agent id/name) instead of a fresh Agent call (Explore/Plan can't be resumed).
+    - Slash commands (`/review`, `/plan`, `/security-scan`, …) already encode the common routes.
+placeholders:
+  TOOL_NOTE: |
+    > **Claude Code note:** this is `~/.claude/CLAUDE.md` (user memory), loaded before project `CLAUDE.md` files, into the router and every specialist except `Explore` and `reviewer` (`omitClaudeMd`). Enforcement lives in `~/.claude/settings.json` (permissions, sandbox, guard hook); this file explains it.
+  TOOL_ENFORCEMENT_SUMMARY: |
+    `~/.claude/settings.json` — `permissions.deny` (always wins, even in bypass mode), the PreToolUse guard hook (`~/.claude/hooks/guard.py` + `guardrails.json`, which also keeps the router main thread read-only), the OS sandbox, and `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB` credential scrubbing
+  TOOL_ENFORCEMENT_TEXT: |
+    Claude Code deny rules and the guard hook are authoritative.
+  TOOL_INTERACTIVE: |
+    The guard hook blocks interactive programs (editors, pagers, bare REPLs).
+  TOOL_TEAM: |
+    The main session runs as the `router` agent (Haiku) and delegates with the Agent tool:
+
+    | Agent | File | Model · effort | Tools |
+    |---|---|---|---|
+    | `router` (main) | `~/.claude/agents/router.md` | haiku | read/search + Agent (edits/shell blocked by hook) |
+    | `Explore` (overrides built-in) | `agents/explore.md` | haiku | read-only |
+    | `reviewer` | `agents/reviewer.md` | haiku | read-only + git |
+    | `planner` | `agents/planner.md` | opus · medium | read-only (plan mode) |
+    | `developer` | `agents/developer.md` | sonnet · medium | all |
+    | `sre` | `agents/sre.md` | sonnet · medium | read + shell |
+    | `architect` | `agents/architect.md` | opus · high | read + docs/diagram writes |
+    | `security` | `agents/security.md` | opus · high | read + scanners |
+
+    Direct (non-router) session when needed: `ROUTER_MODE=off claude --agent developer`.
+  TOOL_APPROVALS: |
+    How Claude Code enforces this: read-only/validation commands are allow-listed; every other shell command and edit prompts (`defaultMode: default`); `permissions.deny` blocks secret files, push, destroy and disk-wiping commands in every mode; the guard hook blocks the nuanced cases (force-push variants, `.env*`, pipes into interpreters, interactive programs) and keeps the router read-only; the OS sandbox confines writes to the project and network to allow-listed domains (first use of a new domain prompts); credentials are scrubbed from Bash, hook and MCP subprocess environments.
+agents:
+  - id: router
+    out: home/.claude/agents/router.md
+    frontmatter:
+      name: router
+      description: Primary orchestrator (main session). Classifies each request, answers SIMPLE ones directly and delegates everything else to the cheapest capable specialist via the Agent tool.
+      model: haiku
+      color: green
+  - id: explorer
+    out: home/.claude/agents/explore.md
+    frontmatter:
+      name: Explore
+      description: Fast read-only codebase/doc search. Use for 'where/how is X' questions that need more than ~3 lookups. Specify thoroughness quick|medium|very thorough.
+      tools: Read, Grep, Glob, WebFetch, WebSearch
+      model: haiku
+      color: cyan
+  - id: reviewer
+    out: home/.claude/agents/reviewer.md
+    frontmatter:
+      name: reviewer
+      description: Cheap independent read-only review of a diff for correctness, regressions, missing tests and obvious security issues. Use after meaningful changes.
+      tools: Read, Grep, Glob, Bash
+      model: haiku
+      color: blue
+      maxTurns: 20
+      omitClaudeMd: true
+  - id: planner
+    out: home/.claude/agents/planner.md
+    frontmatter:
+      name: planner
+      description: Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan for developer, sre or architect. Read-only.
+      tools: Read, Grep, Glob, WebFetch, Agent(Explore)
+      model: opus
+      effort: medium
+      permissionMode: plan
+      color: yellow
+      maxTurns: 25
+  - id: developer
+    out: home/.claude/agents/developer.md
+    frontmatter:
+      name: developer
+      description: Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint. Use for NORMAL and COMPLEX implementation.
+      model: sonnet
+      effort: medium
+      color: orange
+      maxTurns: 60
+  - id: sre
+    out: home/.claude/agents/sre.md
+    frontmatter:
+      name: sre
+      description: SRE/DevOps for live systems — incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures, observability. Read-only diagnosis first; mutations need approval.
+      tools: Read, Grep, Glob, Bash, WebFetch, Agent(Explore)
+      model: sonnet
+      effort: medium
+      color: purple
+      maxTurns: 40
+  - id: architect
+    out: home/.claude/agents/architect.md
+    frontmatter:
+      name: architect
+      description: Solution & cloud architecture (AWS/Azure/GCP), distributed systems, platform/Kubernetes design, migrations, trade-offs, ADRs and diagrams; hard root-cause analysis.
+      tools: Read, Grep, Glob, WebFetch, WebSearch, Write, Edit, Bash, Agent(Explore)
+      model: opus
+      effort: high
+      color: red
+      maxTurns: 30
+  - id: security
+    out: home/.claude/agents/security.md
+    frontmatter:
+      name: security
+      description: Security specialist — threat modeling, IAM/policy review, secrets and supply-chain analysis, vulnerability review of code/IaC/containers; the independent reviewer for HIGH_RISK changes. Read-only; runs scanners.
+      tools: Read, Grep, Glob, Bash, WebFetch, WebSearch
+      model: opus
+      effort: high
+      color: pink
+      maxTurns: 30
+commands:
+  format: claude
+  out: home/.claude/commands
+  cheap_model: haiku
+  args_token: "$ARGUMENTS"
+  roles: {explorer: Explore}
+  context_allowed_tools: "Bash(git status *), Bash(git --no-pager *), Bash(git ls-files *), Bash(ggshield secret scan *), Bash(tail *), Bash(head *), Bash(grep *)"
+  delegate: "Delegate this to the `{{ROLE}}` subagent with the Agent tool, passing a self-contained brief (GOAL, CONTEXT incl. the output above, CONSTRAINTS, ACCEPTANCE, RETURN), then summarise its result for Murpheux."

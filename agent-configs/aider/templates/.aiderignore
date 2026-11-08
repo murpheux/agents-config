@@ -1,0 +1,27 @@
+# .aiderignore template — copy to a repo root (Aider reads <git-root>/.aiderignore).
+# Gitignored files are already invisible to Aider (add-gitignore-files: false); this adds
+# secret-bearing files that are sometimes committed or not ignored.
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.pem
+*.key
+*.pfx
+*.p12
+*.kdbx
+id_rsa*
+id_ed25519*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
+**/secrets/**
+*kubeconfig*
+.kube/
+.aws/
+.azure/
+.docker/config.json
+.aider*

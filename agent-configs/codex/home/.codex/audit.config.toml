@@ -1,0 +1,7 @@
+# ~/.codex/audit.config.toml — `codex --profile audit`: read-only security/IaC review.
+# Anything that would need approval is auto-rejected (approval_policy = "never" + read-only sandbox).
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
+sandbox_mode = "read-only"
+approval_policy = "never"
+web_search = "disabled"

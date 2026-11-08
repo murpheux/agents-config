@@ -1,0 +1,118 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+# ~/.codex/config.toml — OpenAI Codex CLI (rust-v0.157.x) global configuration (Murpheux)
+# Rendered by install.sh (__HOME__ → your home). Validate with:  codex --strict-config
+# Tier profiles live in separate files: cheap.config.toml, deep.config.toml, audit.config.toml,
+# gateway.config.toml → `codex --profile <name>` (a top-level `profile =` key is an error since 0.134).
+
+# ── Models / cost ─────────────────────────────────────────────────────────────────────────
+model = "gpt-6-sol"                     # workhorse main thread (router + NORMAL work)
+model_reasoning_effort = "medium"
+plan_mode_reasoning_effort = "high"
+model_reasoning_summary = "concise"
+model_verbosity = "low"                 # shorter answers = fewer output tokens
+review_model = "gpt-6-luna"             # /review on the cheap tier
+model_auto_compact_token_limit = 180000
+tool_output_token_limit = 12000         # cap tool output fed back to the model
+project_doc_max_bytes = 65536           # default 32 KiB would truncate ~/.codex/AGENTS.md + project files
+project_doc_fallback_filenames = ["CLAUDE.md"]
+
+[agents]
+default_subagent_model = "gpt-6-luna"   # any unnamed helper spawns on the cheap tier
+default_subagent_reasoning_effort = "high"
+max_concurrent_threads_per_session = 4
+max_depth = 1
+
+# ── Safety ────────────────────────────────────────────────────────────────────────────────
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+allow_login_shell = false
+web_search = "cached"                   # cached index: cheaper and less prompt-injection surface than live
+file_opener = "vscode"
+
+[sandbox_workspace_write]
+network_access = false                  # commands needing network ask for approval (sre agent enables it)
+exclude_tmpdir_env_var = false
+exclude_slash_tmp = false
+
+[shell_environment_policy]
+inherit = "all"
+ignore_default_excludes = false         # keep the built-in *KEY* / *SECRET* / *TOKEN* excludes
+set = { DOTNET_CLI_TELEMETRY_OPTOUT = "1", GIT_PAGER = "cat", PAGER = "cat" }
+
+[shell_environment_policy.filters]
+"OP_SESSION_*" = "exclude"
+"OP_SERVICE_ACCOUNT_TOKEN" = "exclude"
+"*PASSWORD*" = "exclude"
+"*_PAT" = "exclude"
+"*CREDENTIAL*" = "exclude"
+"AGENTGATEWAY_*" = "exclude"
+"OPENROUTER_*" = "exclude"
+"AWS_SECRET_ACCESS_KEY" = "exclude"
+"AWS_SESSION_TOKEN" = "exclude"
+
+# ── Guard hook (same guardrails.json as every other agent config) ───────────────────────
+# New/changed hooks must be trusted once in the TUI: /hooks
+[[hooks.PreToolUse]]
+matcher = "^(Bash|shell|local_shell|apply_patch|Edit|Write)$"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "python3 __HOME__/.codex/hooks/guard.py --format codex"
+timeout = 15
+statusMessage = "Guardrails check"
+
+# ── UI ────────────────────────────────────────────────────────────────────────────────────
+[tui]
+notifications = ["agent-turn-complete", "approval-requested"]
+notification_condition = "unfocused"
+
+# ── Providers (OpenAI via `codex login` is the default; these are for the gateway profile) ─
+[model_providers.scarlet]
+name = "Agentgateway (LiteLLM) on scarlet"
+base_url = "https://scarlet:4000/v1"
+wire_api = "responses"                  # LiteLLM >= 1.63.8 exposes /v1/responses; "chat" is a hard error
+request_max_retries = 4
+stream_max_retries = 5
+stream_idle_timeout_ms = 300000
+
+[model_providers.scarlet.auth]          # Codex runs this itself; the token never enters model context
+command = "op"
+args = ["read", "op://AI/agentgateway/credential"]
+timeout_ms = 5000
+refresh_interval_ms = 300000
+
+[model_providers.openrouter]
+name = "OpenRouter"
+base_url = "https://openrouter.ai/api/v1"
+env_key = "OPENROUTER_API_KEY"
+wire_api = "responses"
+
+# ── MCP servers (read-mostly; outputs capped) ───────────────────────────────────────────
+[mcp_servers.github]
+url = "https://api.githubcopilot.com/mcp/"
+bearer_token_env_var = "GITHUB_PAT"
+http_headers = { "X-MCP-Toolsets" = "repos,issues,pull_requests,actions,code_security", "X-MCP-Readonly" = "true" }
+default_tools_approval_mode = "auto"    # read-only server
+tool_timeout_sec = 60
+
+[mcp_servers.context7]
+url = "https://mcp.context7.com/mcp"
+env_http_headers = { "CONTEXT7_API_KEY" = "CONTEXT7_API_KEY" }
+default_tools_approval_mode = "auto"
+
+[mcp_servers.mslearn]
+url = "https://learn.microsoft.com/api/mcp"
+default_tools_approval_mode = "auto"
+
+[mcp_servers.awsdocs]
+command = "uvx"
+args = ["awslabs.aws-documentation-mcp-server@latest"]
+env = { FASTMCP_LOG_LEVEL = "ERROR", AWS_DOCUMENTATION_PARTITION = "aws" }
+startup_timeout_sec = 30
+default_tools_approval_mode = "auto"
+
+[mcp_servers.terraform]
+command = "docker"
+args = ["run", "-i", "--rm", "hashicorp/terraform-mcp-server"]
+startup_timeout_sec = 30
+default_tools_approval_mode = "auto"

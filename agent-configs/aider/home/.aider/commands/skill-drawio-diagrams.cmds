@@ -1,0 +1,2 @@
+# /load this file to add the 'drawio-diagrams' skill to the chat as read-only context
+/read-only ~/.aider/skills/drawio-diagrams/SKILL.md
