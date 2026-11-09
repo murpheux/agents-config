@@ -1,6 +1,6 @@
-# agent-configs — one design, seven AI coding agents
+# agent-configs — one design, twelve AI coding agents
 
-The cost-aware multi-agent setup built for OpenCode (`opencode/.config/opencode` — the baseline every other tool is generated from), re-implemented natively for six more tools. Every folder mirrors the tool's real home-directory layout and has its own `install.sh` (+ `install.ps1` where Windows matters) that backs up anything it replaces into `~/.agent-config-backups/`.
+The cost-aware multi-agent setup built for OpenCode (`opencode/.config/opencode` — the baseline every other tool is generated from), re-implemented natively for more tools (the five newest - kilo, qwen, kiro, kimi, antigravity - are docs-verified but still carry gaps; see each folder's README). Every folder mirrors the tool's real home-directory layout and has its own `install.sh` (+ `install.ps1` where Windows matters) that backs up anything it replaces into `~/.agent-config-backups/`.
 
 | Folder | Tool (version verified) | Router mechanism | Enforcement |
 |---|---|---|---|
@@ -11,6 +11,11 @@ The cost-aware multi-agent setup built for OpenCode (`opencode/.config/opencode`
 | `cline/` | Cline 4.1.x (legacy + next) / CLI 3.0.x | Plan mode + read-only subagents | guard hook (both builds), approvals, legacy deny list |
 | `codex/` | Codex CLI 0.157.x | main thread + custom agents + profiles | sandbox, exec-policy rules, guard hook, env filtering |
 | `aider/` | Aider 0.86.x | aliases/modes (`ai`, `ai-ask`, `ai-arch`, `ai-sec`) | Aider options, pre-commit verify, `.aiderignore` |
+| `kilo/` | Kilo Code CLI 7.8.27 | `router` primary agent (`~/.config/kilo/agents/*.md`, `mode`/`permission` frontmatter) | `permission` allow/ask/deny, TS plugin `tool.execute.before` guard (throw = block) |
+| `qwen/` | Qwen Code 0.27.1 | main session + subagents in `~/.qwen/agents` (`tools`/`disallowedTools`) | `PreToolUse` hook in `settings.json` (exit 2 blocks), folder trust |
+| `kiro/` | Kiro CLI 3.1.0 (V3 engine) | custom agents in `~/.kiro/agents` (`tools` + `permissions.rules`) | `PreToolUse` agent hook (non-zero exit blocks; V3 shape pending), `permissions` rules |
+| `kimi/` | Kimi Code CLI 2.5.2 | `kimi --agent router`; subagents via `~/.kimi-code/agents` | `[[hooks]]` `PreToolUse` in `config.toml` (exit 2 blocks, fail-open on crash), `permission` |
+| `antigravity/` | Antigravity CLI (`agy`) 1.0.13 | agents in `~/.gemini/config/agents` (`mainAgent`/`subagent`, `invoke_subagent`) | `hooks.json` `PreToolUse` (stdout `decision` JSON), `commandExecutionPolicy` |
 
 ## Shared source of truth (`_shared/`)
 

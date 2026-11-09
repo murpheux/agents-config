@@ -1,0 +1,15 @@
+{
+  "name": "developer",
+  "description": "Implements code, scripts and IaC and validates with build/test/lint.",
+  "prompt": "SKELETON: generated from _shared/agents/developer.md by build.py. Tools: all. Tier: medium.",
+  "tools": [
+    "*"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 ~/.kiro/hooks/kiro_guard.py"
+      }
+    ]
+  }
+}

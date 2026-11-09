@@ -1,0 +1,18 @@
+// ~/.config/kilo/kilo.jsonc — SKELETON (Phase 0 research; verify every key with `kilo` before relying on it).
+// Provider: Agentgateway (OpenAI-compatible). Key is read from the environment, never stored.
+{
+  "provider": {
+    "agentgateway": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Agentgateway",
+      "options": { "baseURL": "https://scarlet:9443/v1", "apiKey": "{env:AGENTGATEWAY_API_KEY}" },
+      "models": {
+        "deepseek-flash": { "name": "DeepSeek Flash (gateway)" },
+        "claude-sonnet-5": { "name": "Claude Sonnet 5 (gateway)" }
+      }
+    }
+  },
+  "model": "agentgateway/claude-sonnet-5",
+  "small_model": "agentgateway/deepseek-flash",
+  "plugin": ["./plugin/guardrails.ts"]
+}

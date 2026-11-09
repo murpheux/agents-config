@@ -1,0 +1,11 @@
+{
+  "_comment": "SKELETON (Phase 0 research) - verify the hooks.json schema against the installed agy.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "command": "python3 $HOME/.gemini/config/hooks/agy_guard.py"
+      }
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "reviewer",
+  "description": "Cheap independent read-only review of a diff.",
+  "prompt": "SKELETON: generated from _shared/agents/reviewer.md by build.py. Tools: read-only + git. Tier: small.",
+  "tools": [
+    "fs_read",
+    "grep",
+    "glob"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 ~/.kiro/hooks/kiro_guard.py"
+      }
+    ]
+  }
+}

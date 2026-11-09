@@ -1,0 +1,9 @@
+# ~/.kiro/permissions.yaml - SKELETON. Tool trust/permission policy (verify schema with kiro-cli).
+trust:
+  read: allow
+  write: ask
+  shell: ask
+deny_paths:
+  - ~/.ssh
+  - ~/.aws/credentials
+  - '**/.env*'

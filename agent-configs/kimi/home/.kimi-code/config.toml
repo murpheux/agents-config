@@ -1,0 +1,16 @@
+# ~/.kimi-code/config.toml - SKELETON (Phase 0 research); verify keys against the installed kimi.
+default_model = "claude-sonnet-5"
+
+[providers.agentgateway]
+type = "openai"
+base_url = "https://scarlet:9443/v1"
+api_key_env = "AGENTGATEWAY_API_KEY"   # name only; the wrapper fills it from 1Password
+
+[models.claude-sonnet-5]
+provider = "agentgateway"
+model = "claude-sonnet-5"
+
+[[hooks]]
+event = "PreToolUse"
+matcher = ".*"
+command = "python3 ~/.kimi-code/hooks/kimi_guard.py"

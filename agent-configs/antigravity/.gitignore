@@ -1,0 +1,17 @@
+# antigravity runtime state and secrets - never commit; install.sh copies only its CONFIG_FILES list.
+home/.gemini/config/*.db
+home/.gemini/config/*.db-*
+home/.gemini/config/agent.db
+home/.gemini/config/sessions/
+home/.gemini/config/cache/
+home/.gemini/config/logs/
+home/.gemini/config/credentials*.json
+home/.gemini/config/*credentials*
+home/.gemini/config/oauth_creds.json
+home/.gemini/config/auth.json
+home/.gemini/config/ca-bundle.pem
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ - but lib/ holds this installer's helpers.
+!lib/

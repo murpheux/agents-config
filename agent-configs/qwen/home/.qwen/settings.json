@@ -1,0 +1,34 @@
+{
+  "_comment": "SKELETON (Phase 0 research) - verify keys against the installed qwen before relying on them.",
+  "context": {
+    "fileName": [
+      "AGENTS.md"
+    ]
+  },
+  "modelProviders": {
+    "openai": [
+      {
+        "id": "claude-sonnet-5",
+        "name": "Claude Sonnet 5 (gateway)",
+        "baseUrl": "https://scarlet:9443/v1",
+        "envKey": "AGENTGATEWAY_API_KEY"
+      }
+    ]
+  },
+  "model": {
+    "name": "claude-sonnet-5"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 $HOME/.qwen/hooks/qwen_guard.py"
+          }
+        ]
+      }
+    ]
+  }
+}

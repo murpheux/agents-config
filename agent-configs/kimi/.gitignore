@@ -1,0 +1,17 @@
+# kimi runtime state and secrets - never commit; install.sh copies only its CONFIG_FILES list.
+home/.kimi-code/*.db
+home/.kimi-code/*.db-*
+home/.kimi-code/agent.db
+home/.kimi-code/sessions/
+home/.kimi-code/cache/
+home/.kimi-code/logs/
+home/.kimi-code/credentials*.json
+home/.kimi-code/*credentials*
+home/.kimi-code/oauth_creds.json
+home/.kimi-code/auth.json
+home/.kimi-code/ca-bundle.pem
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ - but lib/ holds this installer's helpers.
+!lib/

@@ -4,7 +4,7 @@
   "agent": "router",
   "model": "sonnet",
   "effortLevel": "medium",
-  "autoCompactWindow": 200000,
+  "autoCompactWindow": 1024000,
   "cleanupPeriodDays": 30,
   "enableAllProjectMcpServers": false,
   "skipWebFetchPreflight": true,
@@ -17,7 +17,7 @@
 
   "env": {
     "CLAUDE_CODE_SUBPROCESS_ENV_SCRUB": "1",
-    "BASH_MAX_OUTPUT_LENGTH": "20000",
+    "BASH_MAX_OUTPUT_LENGTH": "1024000",
     "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2",
     "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "4",
     "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",

@@ -1,0 +1,17 @@
+{
+  "name": "planner",
+  "description": "Decomposes complex requests into a short executable plan. Read-only.",
+  "prompt": "SKELETON: generated from _shared/agents/planner.md by build.py. Tools: read-only. Tier: large.",
+  "tools": [
+    "fs_read",
+    "grep",
+    "glob"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 ~/.kiro/hooks/kiro_guard.py"
+      }
+    ]
+  }
+}

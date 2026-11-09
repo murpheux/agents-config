@@ -1,0 +1,5 @@
+{
+  "_comment": "SKELETON (Phase 0 research) - verify keys against the installed kiro-cli.",
+  "chat.defaultAgent": "developer",
+  "chat.enableThinking": true
+}

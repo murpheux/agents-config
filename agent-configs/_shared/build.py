@@ -250,6 +250,9 @@ def render_tool(tool: str, template: str) -> list[Path]:
                 lines.append(f"{k} = {toml_value(v)}")
             lines.append(f"developer_instructions = '''\n{content}'''")
             dest.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        elif ag.get("json") is not None:  # Kiro CLI agent: JSON config, system prompt inline as "prompt"
+            obj = {**ag["json"], "prompt": content.strip()}
+            dest.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         else:
             fm = ag.get("frontmatter")
             dest.write_text((f"---\n{frontmatter(fm)}---\n\n" if fm else "") + content, encoding="utf-8")

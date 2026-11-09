@@ -1,0 +1,17 @@
+# kiro runtime state and secrets - never commit; install.sh copies only its CONFIG_FILES list.
+home/.kiro/*.db
+home/.kiro/*.db-*
+home/.kiro/agent.db
+home/.kiro/sessions/
+home/.kiro/cache/
+home/.kiro/logs/
+home/.kiro/credentials*.json
+home/.kiro/*credentials*
+home/.kiro/oauth_creds.json
+home/.kiro/auth.json
+home/.kiro/ca-bundle.pem
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ - but lib/ holds this installer's helpers.
+!lib/

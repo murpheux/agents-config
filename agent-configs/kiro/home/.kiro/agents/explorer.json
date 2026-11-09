@@ -1,0 +1,17 @@
+{
+  "name": "explorer",
+  "description": "Fast read-only codebase/doc search.",
+  "prompt": "SKELETON: generated from _shared/agents/explorer.md by build.py. Tools: read-only. Tier: small.",
+  "tools": [
+    "fs_read",
+    "grep",
+    "glob"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 ~/.kiro/hooks/kiro_guard.py"
+      }
+    ]
+  }
+}

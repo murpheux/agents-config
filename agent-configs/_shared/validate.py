@@ -136,6 +136,23 @@ for p in sorted(ROOT.rglob("*")):
     except Exception as e:  # noqa: BLE001
         errors.append(f"{rel}: {type(e).__name__}: {e}")
 
+# Kiro agents: JSON with name + prompt; Antigravity instruction files must stay <= 24 KB
+for p in sorted(ROOT.rglob("*")):
+    if not p.is_file() or "/_shared/" in str(p) or "/.git/" in str(p):
+        continue
+    rel = p.relative_to(ROOT)
+    if p.suffix == ".json" and "/.kiro/agents/" in str(p):
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+            for k in ("name", "prompt"):
+                if not isinstance(d.get(k), str) or not d[k].strip():
+                    errors.append(f"{rel}: Kiro agent missing '{k}'")
+            bump("kiro agents")
+        except Exception as e:  # noqa: BLE001
+            errors.append(f"{rel}: {type(e).__name__}: {e}")
+    if p.name in ("GEMINI.md", "AGENTS.md") and str(rel).startswith("antigravity/") and p.stat().st_size > 24 * 1024:
+        errors.append(f"{rel}: Antigravity instructions {p.stat().st_size} B exceed 24 KB")
+
 # guard self-test in every tool that ships it
 for g in sorted(ROOT.glob("*/**/guard.py")):
     if "_shared" in str(g):

@@ -1,0 +1,17 @@
+# qwen runtime state and secrets - never commit; install.sh copies only its CONFIG_FILES list.
+home/.qwen/*.db
+home/.qwen/*.db-*
+home/.qwen/agent.db
+home/.qwen/sessions/
+home/.qwen/cache/
+home/.qwen/logs/
+home/.qwen/credentials*.json
+home/.qwen/*credentials*
+home/.qwen/oauth_creds.json
+home/.qwen/auth.json
+home/.qwen/ca-bundle.pem
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ - but lib/ holds this installer's helpers.
+!lib/

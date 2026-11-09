@@ -8,7 +8,9 @@ bad() { echo "  ✘ $*"; fail=$((fail + 1)); }
 chk() { if eval "$2"; then ok "$1"; else bad "$1"; fi; }
 FORCE_PUSH_CLAUDE='{"tool_name":"Bash","tool_input":{"command":"git -C . push --force origin main"},"agent_id":"a1"}'
 
-for tool in aider claude-code codex cline github-copilot-cli vscode opencode; do
+TOOLS="aider claude-code codex cline github-copilot-cli vscode opencode"
+for t in kilo qwen kiro kimi antigravity; do [[ -f "$ROOT/$t/install.sh" ]] && TOOLS="$TOOLS $t"; done  # Phase 2 tools join once generated
+for tool in $TOOLS; do
   H="$(mktemp -d)"; echo "== $tool  (HOME=$H)"
   mkdir -p "$H/.copilot" && printf '{\n  // existing user setting\n  "theme": "dim"\n}\n' > "$H/.copilot/settings.json"
   mkdir -p "$H/.config/opencode/agents" && echo "old" > "$H/.config/opencode/agents/murpheux.md"

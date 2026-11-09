@@ -1,0 +1,17 @@
+{
+  "name": "architect",
+  "description": "Solution and cloud architecture, trade-offs, ADRs and diagrams.",
+  "prompt": "SKELETON: generated from _shared/agents/architect.md by build.py. Tools: read + docs writes. Tier: large.",
+  "tools": [
+    "fs_read",
+    "grep",
+    "glob"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 ~/.kiro/hooks/kiro_guard.py"
+      }
+    ]
+  }
+}

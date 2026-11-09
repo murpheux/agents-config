@@ -1,0 +1,17 @@
+{
+  "name": "sre",
+  "description": "SRE/DevOps for live systems; read-only diagnosis first.",
+  "prompt": "SKELETON: generated from _shared/agents/sre.md by build.py. Tools: read + shell. Tier: medium.",
+  "tools": [
+    "fs_read",
+    "grep",
+    "glob"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 ~/.kiro/hooks/kiro_guard.py"
+      }
+    ]
+  }
+}

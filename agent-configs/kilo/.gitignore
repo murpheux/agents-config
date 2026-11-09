@@ -1,0 +1,17 @@
+# kilo runtime state and secrets - never commit; install.sh copies only its CONFIG_FILES list.
+home/.config/kilo/*.db
+home/.config/kilo/*.db-*
+home/.config/kilo/agent.db
+home/.config/kilo/sessions/
+home/.config/kilo/cache/
+home/.config/kilo/logs/
+home/.config/kilo/credentials*.json
+home/.config/kilo/*credentials*
+home/.config/kilo/oauth_creds.json
+home/.config/kilo/auth.json
+home/.config/kilo/ca-bundle.pem
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ - but lib/ holds this installer's helpers.
+!lib/

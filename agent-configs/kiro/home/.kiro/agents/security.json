@@ -1,0 +1,17 @@
+{
+  "name": "security",
+  "description": "Security specialist; threat modeling and scanners. Read-only.",
+  "prompt": "SKELETON: generated from _shared/agents/security.md by build.py. Tools: read + scanners. Tier: large.",
+  "tools": [
+    "fs_read",
+    "grep",
+    "glob"
+  ],
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "python3 ~/.kiro/hooks/kiro_guard.py"
+      }
+    ]
+  }
+}

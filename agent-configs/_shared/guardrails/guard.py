@@ -5,7 +5,7 @@ Reads a hook payload (JSON) on stdin, checks shell commands and file paths again
 guardrails.json (same directory), and answers in the calling tool's hook contract.
 
 Usage:
-  guard.py --format claude|copilot|cline|codex|generic   < payload.json
+  guard.py --format claude|copilot|cline|codex|antigravity|generic   < payload.json
   guard.py --check-command "rm -rf /"                    # manual test
   guard.py --check-path ~/.ssh/id_ed25519 [--write]      # manual test
   guard.py --self-test
@@ -75,13 +75,22 @@ def check_path(path: str, write: bool = False) -> tuple[str, str]:
 
 # --- payload extraction ------------------------------------------------------------------------
 
-SHELL_TOOLS = {"bash", "shell", "run_in_terminal", "runinterminal", "execute_command", "run_command", "run_commands", "terminal", "exec", "local_shell", "powershell"}
-READ_TOOLS = {"read", "read_file", "read_files", "view", "cat", "notebookread", "grep", "glob", "rg", "search_files", "search_codebase", "list_files", "readfile"}
+SHELL_TOOLS = {"bash", "shell", "run_in_terminal", "runinterminal", "execute_command", "run_command", "run_commands", "terminal", "exec", "local_shell", "powershell",
+               "run_shell_command", "execute_bash", "shell_command"}
+READ_TOOLS = {"read", "read_file", "read_files", "view", "cat", "notebookread", "grep", "glob", "rg", "search_files", "search_codebase", "list_files", "readfile",
+              "read_many_files", "fs_read", "list_directory", "glob", "search_file_content", "grep_search", "view_file", "readmediafile"}
 WRITE_TOOLS = {"edit", "write", "multiedit", "notebookedit", "write_to_file", "replace_in_file", "create", "str_replace", "str_replace_editor",
-               "apply_patch", "edit_file", "create_file", "editor", "editfiles", "createfile", "replace_string_in_file", "insert_edit_into_file"}
+               "apply_patch", "edit_file", "create_file", "editor", "editfiles", "createfile", "replace_string_in_file", "insert_edit_into_file",
+               "replace", "write_file", "fs_write", "writefile", "strreplacefile", "write_to_file", "replace_file_content", "multi_replace_file_content"}
 
 
 def _find(d, keys):
+    if isinstance(d, list):  # Kiro/Antigravity nest args in lists of dicts
+        for v in d:
+            r = _find(v, keys)
+            if r:
+                return r
+        return None
     if isinstance(d, dict):
         for k in keys:
             if isinstance(d.get(k), str):
@@ -100,7 +109,7 @@ def _command_of(tool_input) -> str | None:
         if isinstance(cmds, list) and cmds:  # Cline next: run_commands {commands: [...]}
             texts = [c if isinstance(c, str) else (_command_of(c) or "") for c in cmds]
             return " ; ".join(t for t in texts if t)
-        for k in ("command", "cmd", "commandLine", "script", "argv"):
+        for k in ("command", "cmd", "commandLine", "CommandLine", "script", "argv"):
             v = tool_input.get(k)
             if isinstance(v, str):
                 return v
@@ -128,7 +137,7 @@ def evaluate(payload: dict) -> tuple[str, str]:
         except json.JSONDecodeError:
             tool_input = {"command": tool_input}
     command = _command_of(tool_input)
-    path = _find(tool_input, ["file_path", "filePath", "path", "notebook_path", "target_file", "filename"])
+    path = _find(tool_input, ["file_path", "filePath", "path", "notebook_path", "target_file", "filename", "TargetFile", "AbsolutePath", "absolute_path"])
     decisions = []
     # apply_patch-style payloads (Codex, OpenCode patch): check every file the patch touches
     patch = _find(tool_input, ["input", "patch", "patchText", "patch_text"])
@@ -176,6 +185,10 @@ def respond(fmt: str, decision: str, reason: str) -> int:
             print(json.dumps({"cancel": True, "errorMessage": msg}))
         else:
             print(json.dumps({"cancel": False, "contextModification": f"CAUTION: {reason}. Confirm with the user before running this."}))
+        return 0
+    if fmt == "antigravity":
+        # Antigravity CLI PreToolUse: JSON {"decision": allow|deny|ask} on stdout, exit 0 (stdout only parsed on exit 0).
+        print(json.dumps({"decision": decision, "reason": msg}))
         return 0
     # generic / codex: non-zero exit + stderr
     print(msg, file=sys.stderr)
@@ -230,6 +243,15 @@ def self_test() -> int:
         ({"sessionId": "s", "timestamp": 1, "cwd": "/w", "toolName": "view", "toolArgs": {"path": "/home/u/.kube/config"}}, "deny"),
         ({"sessionId": "s", "timestamp": 1, "cwd": "/w", "toolName": "create", "toolArgs": {"path": "src/new.py", "file_text": "x"}}, "allow"),
         ({"hook_event_name": "PreToolUse", "tool_name": "Edit", "tool_input": {"path": ".git/config"}}, "deny"),
+        ({"tool_name": "run_shell_command", "tool_input": {"command": "git push --force"}}, "deny"),
+        ({"tool_name": "replace", "tool_input": {"file_path": ".git/hooks/pre-commit"}}, "deny"),
+        ({"tool_name": "write_file", "tool_input": {"file_path": "src/a.py", "content": "x"}}, "allow"),
+        ({"tool_name": "execute_bash", "tool_input": {"command": "terraform destroy"}}, "deny"),
+        ({"tool_name": "fs_write", "tool_input": {"command": "create", "path": ".git/config", "file_text": "x"}}, "deny"),
+        ({"tool_name": "fs_read", "tool_input": {"operations": [{"mode": "Line", "path": "/home/u/.aws/credentials"}]}}, "deny"),
+        ({"tool_name": "StrReplaceFile", "tool_input": {"path": ".git/config", "edit": {"old": "a", "new": "b"}}}, "deny"),
+        ({"tool_name": "run_command", "tool_input": {"CommandLine": "rm -rf /"}}, "deny"),
+        ({"tool_name": "write_to_file", "tool_input": {"TargetFile": "/h/.ssh/id_ed25519"}}, "deny"),
     ]
     for payload, want in payloads:
         got = evaluate(payload)[0]
@@ -294,7 +316,7 @@ def router_gate(payload: dict) -> tuple[str, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--format", default="generic", choices=["claude", "copilot", "cline", "codex", "generic"])
+    ap.add_argument("--format", default="generic", choices=["claude", "copilot", "cline", "codex", "antigravity", "generic"])
     ap.add_argument("--main-thread-readonly", action="store_true", help="Claude Code router mode: block main-thread edits/shell")
     ap.add_argument("--check-command")
     ap.add_argument("--check-path")
