@@ -28,7 +28,7 @@
 <h2>4. Routing &amp; model tiers</h2>
 <table><tr><th>Agent</th><th>Model fallbacks</th><th>How it's reached</th></tr>
 <tr><td><b>Router</b></td><td>Claude Sonnet 5 → GPT-6 Sol → Auto</td><td>agent picker. Tools: agent, read, search, web, todo</td></tr>
-<tr><td>Explorer · Reviewer</td><td>GPT-6 Luna → Claude Haiku 4.5 → Auto</td><td>subagent (cheapest)</td></tr>
+<tr><td>Explorer · Reviewer</td><td>GPT-6 Luna → Claude Haiku 5.5 → Auto</td><td>subagent (cheapest)</td></tr>
 <tr><td>Planner</td><td>GPT-6 Sol → Claude Sonnet 5 · medium</td><td>subagent</td></tr>
 <tr><td>Developer · SRE</td><td>Claude Sonnet 5 → GPT-6 Sol · medium</td><td>subagent, or the handoff "Implement with Developer"</td></tr>
 <tr><td>Architect · Security</td><td>Claude Opus 5.5 → GPT-6 Sol · high</td><td><b>handoff only</b> (premium tier)</td></tr></table>

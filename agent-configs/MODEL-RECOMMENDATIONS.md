@@ -28,7 +28,7 @@ Token profile per call: **15,000 input** (85% cached) · **700 output** + **300 
 | 1 | **GPT-6 Luna** | medium | $0.1 / $0.01 / $0.5 | $0.0009 | $0.085 | ●●●●● | ●●●○○ | Near-lowest cost (DeepSeek is ~30% cheaper per call here), faster, and a stronger instruction-follower. Ideal for high-frequency triage | Copilot · Codex · gateway |
 | 2 | **DeepSeek V4 Flash** _(current)_ | — | $0.14 / $0.0028 / $0.28 | $0.0006 | $0.063 | ●●●●○ | ●●●○○ | Current router. Cheapest per call because of its 98% cache discount on the stable system prompt; a little slower | gateway (`deepseek-flash`) |
 | 3 | **Gemini 3.8 Flash** | low | $0.75 / $0.075 / $3.75 | $0.0064 | $0.639 | ●●●●● | ●●●○○ | Fastest option with more reasoning headroom for ambiguous requests | Copilot · gateway |
-| 4 | **Claude Haiku 4.5** | — | $1 / $0.1 / $5 | $0.0085 | $0.852 | ●●●●● | ●●●○○ | Most reliable tool-calling and delegation; ~10× the cost of Luna | Claude Code · Copilot · gateway |
+| 4 | **Claude Haiku 5.5** | — | $1 / $0.1 / $5 | $0.0085 | $0.852 | ●●●●● | ●●●○○ | Most reliable tool-calling and delegation; ~10× the cost of Luna | Claude Code · Copilot · gateway |
 | 5 | **GPT-5 mini** | low | $0.25 / $0.025 / $2 | $0.0029 | $0.288 | ●●●●○ | ●●○○○ | Fallback on Copilot plans where the newer lightweight models are unavailable | Copilot CLI |
 
 ### explorer — Read-only codebase/doc search
@@ -52,7 +52,7 @@ Token profile per call: **25,000 input** (30% cached) · **1,800 output** + **1,
 | 1 | **GPT-6 Luna** | high | $0.1 / $0.01 / $0.5 | $0.0035 | $0.347 | ●●●●● | ●●●○○ | Cheap, and a different model family from the Sonnet developer, which makes the review more independent | Copilot · Codex · gateway |
 | 2 | **Gemini 3.8 Flash** | medium | $0.75 / $0.075 / $3.75 | $0.026 | $2.61 | ●●●●● | ●●●○○ | Also a different family; better at subtle logic, still cheap | Copilot · gateway |
 | 3 | **DeepSeek V4 Flash** _(current)_ | — | $0.14 / $0.0028 / $0.28 | $0.0034 | $0.340 | ●●●●○ | ●●●○○ | Current reviewer; cheapest; fine for routine diffs | gateway (`deepseek-flash`) |
-| 4 | **Claude Haiku 4.5** | — | $1 / $0.1 / $5 | $0.035 | $3.48 | ●●●●● | ●●●○○ | Precise and fast; same family as the developer | Claude Code · Copilot · gateway |
+| 4 | **Claude Haiku 5.5** | — | $1 / $0.1 / $5 | $0.035 | $3.48 | ●●●●● | ●●●○○ | Precise and fast; same family as the developer | Claude Code · Copilot · gateway |
 | 5 | **Kimi K2.7 Code** | — | $0.95 / $0.19 / $4 | $0.031 | $3.12 | ●●●○○ | ●●●●○ | Code specialist; good at bug-spotting; flat-rate via Ollama cloud | Copilot · gateway (Ollama cloud) |
 
 ### planner — Short executable plans

@@ -139,7 +139,7 @@
 
   "sandbox": {
     "enabled": true,
-    "autoAllowBashIfSandboxed": false,
+    "autoAllowBashIfSandboxed": true,
     "excludedCommands": ["docker *", "kubectl *", "helm *", "op *", "gh *", "aws *", "az *", "gcloud *", "terraform *", "tofu *", "ansible*", "ssh *", "scp *"],
     "filesystem": {
       "denyRead": ["~/.ssh", "~/.aws/credentials", "~/.gnupg", "~/.config/op", "~/.kube/config", "~/.docker/config.json"]

@@ -41,10 +41,10 @@ agents:
         - {label: 'Implement with Developer', agent: Developer, prompt: 'Implement the plan above. Validate with the project build/test/lint and report in the standard format.', send: false}
   - id: explorer
     out: home/.copilot/agents/vscode-explorer.agent.md
-    frontmatter: {name: Explorer, description: "Read-only repo/infra exploration for find/where/how-does questions.", target: vscode, user-invocable: false, model: ['GPT-6 Luna (copilot)', 'Claude Haiku 4.5 (copilot)', 'Auto (copilot)'], tools: [read, search, web]}
+    frontmatter: {name: Explorer, description: "Read-only repo/infra exploration for find/where/how-does questions.", target: vscode, user-invocable: false, model: ['GPT-6 Luna (copilot)', 'Claude Haiku 5.5 (copilot)', 'Auto (copilot)'], tools: [read, search, web]}
   - id: reviewer
     out: home/.copilot/agents/vscode-reviewer.agent.md
-    frontmatter: {name: Reviewer, description: "Cheap independent review of a diff for correctness, regressions, missing tests and obvious security issues.", target: vscode, model: ['GPT-6 Luna (copilot)', 'Claude Haiku 4.5 (copilot)', 'Auto (copilot)'], tools: [read, search, execute]}
+    frontmatter: {name: Reviewer, description: "Cheap independent review of a diff for correctness, regressions, missing tests and obvious security issues.", target: vscode, model: ['GPT-6 Luna (copilot)', 'Claude Haiku 5.5 (copilot)', 'Auto (copilot)'], tools: [read, search, execute]}
   - id: planner
     out: home/.copilot/agents/vscode-planner.agent.md
     frontmatter: {name: Planner, description: "Decomposes complex requests into a short executable plan. Read-only.", target: vscode, model: ['GPT-6 Sol (copilot)', 'Claude Sonnet 5 (copilot)'], reasoning-effort: medium, tools: [read, search, web, agent], agents: [Explorer]}

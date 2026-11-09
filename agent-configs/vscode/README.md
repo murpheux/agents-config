@@ -22,8 +22,8 @@ vscode/
 | Agent | Model (fallbacks) | Role |
 |---|---|---|
 | **Router** | Claude Sonnet 5 → GPT-6 Sol → Auto | triage; tools read/search/web/todo/agent only |
-| Explorer (subagent) | GPT-6 Luna → Claude Haiku 4.5 → Auto | cheapest discovery |
-| Reviewer (subagent) | GPT-6 Luna → Claude Haiku 4.5 → Auto | diff review |
+| Explorer (subagent) | GPT-6 Luna → Claude Haiku 5.5 → Auto | cheapest discovery |
+| Reviewer (subagent) | GPT-6 Luna → Claude Haiku 5.5 → Auto | diff review |
 | Planner (subagent) | GPT-6 Sol → Claude Sonnet 5 · medium | plans |
 | Developer / SRE (subagents) | Claude Sonnet 5 → GPT-6 Sol · medium | implementation / ops |
 | Architect (**handoff**) | Claude Opus 5.5 → GPT-6 Sol · high | premium design |

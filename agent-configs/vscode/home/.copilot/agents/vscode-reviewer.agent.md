@@ -4,7 +4,7 @@ description: Cheap independent review of a diff for correctness, regressions, mi
 target: vscode
 model:
 - GPT-6 Luna (copilot)
-- Claude Haiku 4.5 (copilot)
+- Claude Haiku 5.5 (copilot)
 - Auto (copilot)
 tools:
 - read
