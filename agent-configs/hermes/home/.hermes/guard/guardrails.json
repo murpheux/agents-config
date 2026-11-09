@@ -1,0 +1,73 @@
+{
+  "_comment": "Single source of truth for command/path guardrails shared by all agent configs. Regexes are Python `re` syntax, matched case-insensitively against each simple command (after splitting on ; && || | and newlines) and against the full command line. Keep in sync with the OpenCode experimental.policies.",
+  "version": 1,
+  "blocked_commands": [
+    { "id": "rm-root",          "regex": "\\brm\\s+(-[a-z]*r[a-z]*f[a-z]*|-[a-z]*f[a-z]*r[a-z]*|--recursive\\s+--force|--force\\s+--recursive)\\s+(/|/\\*|~|~/|~/\\*|\\$HOME/?|\\$HOME/\\*)(\\s|$)", "reason": "Recursive delete of filesystem root or home directory" },
+    { "id": "sudo-rm",          "regex": "\\bsudo\\s+rm\\b", "reason": "Privileged deletion" },
+    { "id": "srm",              "regex": "(^|\\s)srm\\s", "reason": "Irreversible secure-delete" },
+    { "id": "find-delete-root", "regex": "\\bfind\\s+/\\S*\\s.*(-delete|-exec\\s+rm)", "reason": "Mass deletion from filesystem root" },
+    { "id": "dd-device",        "regex": "\\bdd\\b.*\\bof=/dev/", "reason": "Raw write to a block device" },
+    { "id": "redirect-device",  "regex": ">\\s*/dev/(disk|sd|nvme|hd|xvd)", "reason": "Raw write to a block device" },
+    { "id": "mkfs",             "regex": "\\b(mkfs(\\.\\w+)?|newfs_\\w+|wipefs|gpt\\s+destroy)\\b", "reason": "Filesystem/partition destruction" },
+    { "id": "diskutil",         "regex": "\\bdiskutil\\s+(erase\\w*|apfs\\s+deletecontainer|partitiondisk|zerodisk|randomdisk|securerase)", "reason": "macOS disk erase/partition" },
+    { "id": "csrutil",          "regex": "\\bcsrutil\\b", "reason": "System Integrity Protection tampering" },
+    { "id": "chmod-root",       "regex": "\\bchmod\\s+-R\\s+(777|000|a\\+rwx)\\s+/(\\s|$|\\*)", "reason": "Recursive permission change on /" },
+    { "id": "chown-root",       "regex": "\\bchown\\s+-R\\s+\\S+\\s+/(\\s|$)", "reason": "Recursive ownership change on /" },
+    { "id": "brew-purge",       "regex": "\\bbrew\\s+(remove|uninstall)\\s+.*(--force\\s+--ignore-dependencies|--zap|\\$\\(brew\\s+list)", "reason": "Unsafe Homebrew purge" },
+    { "id": "win-disk",         "regex": "\\b(format-volume|clear-disk|initialize-disk|format\\s+[a-z]:)", "reason": "Windows disk format/wipe" },
+    { "id": "win-rm-root",      "regex": "remove-item\\b.*-recurse.*\\s[a-z]:\\\\?(\\s|$)|remove-item\\b.*\\s[a-z]:\\\\?\\s.*-recurse", "reason": "Recursive delete of a Windows drive root" },
+    { "id": "pipe-to-shell",    "regex": "(curl|wget|iwr|invoke-webrequest|irm|invoke-restmethod)\\b[^|]*\\|\\s*(sudo\\s+)?(sh|bash|zsh|pwsh|powershell|iex|invoke-expression|python3?)\\b", "reason": "Remote code piped into an interpreter" },
+    { "id": "iex",              "regex": "\\b(iex|invoke-expression)\\b", "reason": "Invoke-Expression on dynamic content" },
+    { "id": "git-force-push",   "regex": "\\bgit(\\s+(-C\\s+\\S+|-c\\s+\\S+|--[\\w-]+(=\\S+)?))*\\s+push\\b.*(\\s--force(\\s|$|=)|\\s-f(\\s|$)|\\s--force-with-lease|\\s--mirror|\\s--delete|\\s\\+\\S+)", "reason": "Force push / remote rewrite" },
+    { "id": "git-push",         "regex": "\\bgit(\\s+(-C\\s+\\S+|-c\\s+\\S+|--[\\w-]+(=\\S+)?))*\\s+push\\b", "reason": "Pushes are done manually by Murpheux", "severity": "ask" },
+    { "id": "git-reset-hard",   "regex": "\\bgit(\\s+(-C\\s+\\S+|-c\\s+\\S+|--[\\w-]+(=\\S+)?))*\\s+(reset\\s+--hard|clean\\s+-[a-z]*f)", "reason": "Discards local work", "severity": "ask" },
+    { "id": "tf-destroy",       "regex": "\\b(terraform|tofu|terragrunt)\\s+(destroy|apply\\s+.*-destroy)", "reason": "Infrastructure destruction" },
+    { "id": "auto-approve",     "regex": "-auto-approve\\b", "reason": "Unreviewed infrastructure change" },
+    { "id": "s3-destroy",       "regex": "\\baws\\s+s3\\s+(rb\\s|rm\\s.*--recursive)", "reason": "S3 bucket/object mass deletion" },
+    { "id": "k8s-delete-ns",    "regex": "\\bkubectl\\s+delete\\s+(namespace|ns)\\b", "reason": "Namespace deletion" },
+    { "id": "docker-prune-all", "regex": "\\bdocker\\s+system\\s+prune\\s+.*-a.*--volumes|\\bdocker\\s+system\\s+prune\\s+.*--volumes.*-a", "reason": "Deletes all images and volumes" },
+    { "id": "docker-stack-rm",  "regex": "\\bdocker\\s+(--context[= ]\\S+\\s+)?(stack|service)\\s+rm\\b", "reason": "Removes Swarm stacks/services", "severity": "ask" },
+    { "id": "sql-destructive",  "regex": "\\b(drop\\s+(database|table|schema)|truncate\\s+table)\\b", "reason": "Destructive SQL", "severity": "ask" },
+    { "id": "op-read-secret",   "regex": "\\bop\\s+(read|item\\s+get|document\\s+get|inject)\\b", "reason": "Prints 1Password secrets into model context" },
+    { "id": "gh-token",         "regex": "\\bgh\\s+auth\\s+token\\b", "reason": "Prints GitHub token" },
+    { "id": "aws-creds",        "regex": "\\baws\\s+configure\\s+(get|export-credentials)\\b", "reason": "Prints AWS credentials" },
+    { "id": "env-dump",         "regex": "(^|[;&|]\\s*)(printenv|env|set|export\\s+-p|get-childitem\\s+env:|gci\\s+env:|dir\\s+env:)\\s*($|[;&|])", "reason": "Dumps environment secrets" },
+    { "id": "dotenv-access",    "regex": "(^|[\\s'\"=/])\\.env(\\.(?!example\\b|sample\\b|template\\b)[\\w.-]+)?($|[\\s'\";|&)])", "reason": "Reads or writes a .env secrets file" },
+    { "id": "private-key-cat",  "regex": "\\b(cat|less|more|head|tail|type|get-content|gc|bat|xxd|base64)\\b.*(id_rsa|id_ed25519|id_ecdsa|\\.pem\\b|\\.key\\b|\\.aws/credentials|\\.kube/config|\\.docker/config\\.json|\\.tfstate)", "reason": "Reads private keys or credential files" },
+    { "id": "rg-no-ignore",     "regex": "\\brg\\b.*(\\s-uu|--no-ignore)", "reason": "Search that bypasses .gitignore (exposes secrets)" }
+  ],
+  "protected_paths": {
+    "read_and_write": [
+      "(^|/)\\.env$", "(^|/)\\.env\\.(?!example$|sample$|template$)[^/]+$",
+      "(^|/)\\.ssh/(?!config$|known_hosts$|[^/]+\\.pub$)[^/]+$",
+      "(^|/)\\.aws/credentials$", "(^|/)\\.gnupg/", "(^|/)\\.config/op/", "(^|/)\\.kube/config",
+      "(^|/)\\.docker/config\\.json$", "\\.tfstate(\\.backup)?$", "\\.(key|pfx|p12|kdbx)$",
+      "(^|/)(id_rsa|id_ed25519|id_ecdsa)$",
+      "(^|/)\\.config/opencode/service\\.json$", "(^|/)\\.claude/\\.credentials\\.json$", "(^|/)\\.config/claude/\\.credentials\\.json$", "(^|/)\\.codex/auth\\.json$",
+      "(^|/)\\.local/share/opencode/"
+    ],
+    "write_only": [
+      "(^|/)\\.git/", "(^|/)\\.ssh/", "(^|/)\\.aws/"
+    ]
+  },
+  "readonly_commands": {
+    "_comment": "Simple commands the router main thread may run (every part of a chain must match). Secret files are still caught by blocked_commands/protected_paths.",
+    "regexes": [
+      "^git(\\s+(--no-pager|-C\\s+\\S+|-c\\s+\\S+))*\\s+(status|diff|log|show|blame|ls-files|rev-parse|remote\\s+-v|stash\\s+list|tag\\s+(-l|--list)|branch(\\s+(-a|-r|-v|--list|--show-current))*)(\\s|$)",
+      "^(ls|pwd|tree|wc|which|file|du|df|uname|whoami|date|rg|grep|jq|yq|head|tail|cat|sort|uniq|cut|tr|awk|sed\\s+-n|dig|nslookup|host)(\\s|$)",
+      "^gh\\s+(pr|issue|run|repo)\\s+(view|list|diff|checks)(\\s|$)",
+      "^ggshield\\s+secret\\s+scan(\\s|$)",
+      "^(docker(\\s+--context[= ]\\S+)?\\s+(ps|images|node\\s+ls|service\\s+(ls|ps)|stack\\s+(ls|ps|services))|kubectl\\s+(get|describe|logs|top))(\\s|$)"
+    ]
+  },
+  "interactive_commands": {
+    "_comment": "No-TTY agent shells hang on these until timeout. Matched against each simple command.",
+    "regexes": [
+      "^(vim?|nvim|nano|emacs|less|more|man)(\\s|$)",
+      "^(top|htop|btop)$",
+      "^git\\s+(rebase\\s+(-i|--interactive)|add\\s+(-p|-i|--patch|--interactive))\\b",
+      "^(python3?|node|ipython|irb|pwsh|powershell)$",
+      "^(bash|zsh|sh)\\s+-i\\b"
+    ]
+  }
+}

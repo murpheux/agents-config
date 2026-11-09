@@ -1,0 +1,17 @@
+# Hermes runtime state and secrets — never commit (Hermes writes these into ~/.hermes itself);
+# install.sh copies only the explicit config files in its CONFIG_FILES list.
+home/.hermes/.env
+home/.hermes/config.yaml
+home/.hermes/auth.json
+home/.hermes/*.db*
+home/.hermes/sessions/
+home/.hermes/logs/
+home/.hermes/state*/
+home/.hermes/memories/
+home/.hermes/ca-bundle.pem
+home/.hermes/shell-hooks-allowlist.json
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ — but lib/ holds this installer's helpers.
+!lib/

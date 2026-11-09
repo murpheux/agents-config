@@ -1,0 +1,67 @@
+# Build spec for oh-my-pi (`omp`, can1357/oh-my-pi 18.x — a Pi fork with native subagents).
+# Rendered by _shared/build.py into omp/home/.omp/agent (omp's agent dir; PI_CODING_AGENT_DIR overrides).
+# Verified against the installed omp 18.18.3 binary (see omp/README.md "Sources"). Hand-maintained beside
+# this spec: models.yml, config.settings.json, extensions/guardrails.ts, guard/omp_guard.py, prompts/,
+# omp-env.sh.
+instructions:
+  - out: home/.omp/agent/AGENTS.md
+guard_out:
+  - home/.omp/agent/guard
+body_subs:
+  DEV_PERMISSIONS: "omp runs with `tools.approvalMode: write` — reads and workspace writes are auto-approved, other tool calls ask — and the `guardrails` extension's `tool_call` hook blocks destructive, secret-reading and interactive commands and protected paths (approval-required ones such as `git push` ask)."
+router_subs:
+  ROUTER_CAPABILITIES: |
+    In omp the **main session is the router**. Specialists are native subagents in `~/.omp/agent/agents/*.md`, launched with the **task** tool (they run in parallel; omp's bundled `scout`, `security-reviewer`, `sonic` and `task` agents remain available too). Pass each a self-contained brief; their models come from omp's model roles (`@smol`, `@plan`, `@slow`, `@task`), all on Agentgateway.
+  DELEGATION_NOTES: |
+    - Launch independent subagents in one task call (batch); keep explorer/reviewer on `@smol`.
+    - Subagents inherit the session's approval mode and the guardrails extension; nesting is capped by `task.maxRecursionDepth` (2).
+placeholders:
+  TOOL_NOTE: |
+    > **omp note:** this is `~/.omp/agent/AGENTS.md`. omp loads ONE user-level context file — the highest-priority source wins — and omp's own (priority 100) outranks the copies other tools keep in `~/.claude`, `~/.agents`, `~/.codex`, `~/.config/opencode` and `~/.copilot`, so those are shadowed rather than stacked. Project `AGENTS.md`/`CLAUDE.md` files still apply on top. Enforcement: omp's approval mode (`write`) plus the `guardrails` extension (`~/.omp/agent/extensions/guardrails.ts`, a fail-closed `tool_call` hook running the shared guard).
+  TOOL_ENFORCEMENT_SUMMARY: |
+    omp's `tools.approvalMode: write` (reads and workspace writes auto-approved, everything else asks) and the `guardrails` extension (`~/.omp/agent/extensions/guardrails.ts` → shared `~/.omp/agent/guard/guard.py` + `guardrails.json`; omp blocks the call if the hook errors or times out)
+  TOOL_ENFORCEMENT_TEXT: |
+    The guardrails extension and omp's approval prompts are authoritative.
+  TOOL_INTERACTIVE: |
+    The guardrails extension blocks interactive programs (editors, pagers, bare REPLs).
+  TOOL_TEAM: |
+    The main session is the router; specialists are omp subagents launched with the task tool. Every model is an Agentgateway model (`https://scarlet:9443/v1`) assigned through omp's model roles:
+
+    | Agent | File | Model (role) | Tools |
+    |---|---|---|---|
+    | router (main) | `~/.omp/agent/AGENTS.md` | `@default` → `claude-sonnet-5` | all (approval mode `write`) |
+    | `explorer` | `agents/explorer.md` | `@smol` → `deepseek-flash` | read-only + web |
+    | `reviewer` | `agents/reviewer.md` | `@smol` → `deepseek-flash` | read-only + bash |
+    | `planner` | `agents/planner.md` | `@plan` → `openrouter/openai/gpt-6-sol` | read-only + web, spawns explorer |
+    | `developer` | `agents/developer.md` | `@task` → `claude-sonnet-5` | all |
+    | `sre` | `agents/sre.md` | `@task` → `claude-sonnet-5` | read + bash + web, spawns explorer |
+    | `architect` | `agents/architect.md` | `@slow` → `openrouter/openai/gpt-6-sol` | read + edit/write (docs) + web |
+    | `security` | `agents/security.md` | `openrouter/anthropic/claude-opus-5-5` | read + bash (scanners) + web |
+
+    Our `reviewer` replaces omp's bundled one of the same name; `scout`, `security-reviewer`, `sonic` and `task` stay available. Prompt templates (`/review`, `/plan`, `/commit`, …) live in `~/.omp/agent/prompts`; topic skills load from `~/.agents/skills`.
+
+    @@ROUTER@@
+  TOOL_APPROVALS: |
+    How omp enforces this: `tools.approvalMode: write` auto-approves read and workspace-write tools and asks before everything else (shell commands included); the `guardrails` extension's `tool_call` hook blocks destructive, secret-reading and interactive commands and protected paths, and asks (refusing when there is no UI) for `git push`, `git reset --hard`, `docker stack rm` and destructive SQL; omp fails closed when the hook errors or times out; `~/AI_Workspace/` is the only tree to touch without asking first.
+agents:
+  - id: explorer
+    out: home/.omp/agent/agents/explorer.md
+    frontmatter: {name: explorer, description: "Fast read-only codebase/doc search for 'where/how is X' questions needing more than ~3 lookups. Returns paths and findings.", tools: [read, grep, glob, find, ast_grep, web_search], model: ["@smol"], thinkingLevel: low}
+  - id: reviewer
+    out: home/.omp/agent/agents/reviewer.md
+    frontmatter: {name: reviewer, description: "Cheap independent read-only review of a diff for correctness, regressions, missing tests and obvious security issues. Use after meaningful changes.", tools: [read, grep, glob, find, ast_grep, bash], model: ["@smol"], thinkingLevel: medium}
+  - id: planner
+    out: home/.omp/agent/agents/planner.md
+    frontmatter: {name: planner, description: "Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan for developer, sre or architect. Read-only.", tools: [read, grep, glob, find, web_search], spawns: [explorer], model: ["@plan"], thinkingLevel: medium}
+  - id: developer
+    out: home/.omp/agent/agents/developer.md
+    frontmatter: {name: developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint. Use for NORMAL and COMPLEX implementation.", spawns: [explorer], model: ["@task"], thinkingLevel: medium}
+  - id: sre
+    out: home/.omp/agent/agents/sre.md
+    frontmatter: {name: sre, description: "SRE/DevOps for live systems — incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures, observability. Read-only diagnosis first; mutations need approval.", tools: [read, grep, glob, find, bash, web_search], spawns: [explorer], model: ["@task"], thinkingLevel: medium}
+  - id: architect
+    out: home/.omp/agent/agents/architect.md
+    frontmatter: {name: architect, description: "Solution & cloud architecture, distributed systems, platform/Kubernetes design, migrations, trade-offs, ADRs and diagrams; hard root-cause analysis.", tools: [read, grep, glob, find, web_search, write, edit, bash], spawns: [explorer], model: ["@slow"], thinkingLevel: high}
+  - id: security
+    out: home/.omp/agent/agents/security.md
+    frontmatter: {name: security, description: "Security specialist — threat modeling, IAM/policy review, secrets and supply-chain analysis, vulnerability review of code/IaC/containers; the independent reviewer for HIGH_RISK changes. Read-only; runs scanners.", tools: [read, grep, glob, find, ast_grep, bash, web_search], model: ["agentgateway/openrouter/anthropic/claude-opus-5-5"], thinkingLevel: high}

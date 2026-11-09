@@ -1,0 +1,18 @@
+# omp runtime state and secrets — never commit; install.sh copies only its CONFIG_FILES list.
+home/.omp/agent/*.db
+home/.omp/agent/*.db-*
+home/.omp/agent/config.yml
+home/.omp/agent/config.yml.lock
+home/.omp/agent/ca-bundle.pem
+home/.omp/agent/sessions/
+home/.omp/agent/terminal-sessions/
+home/.omp/agent/predict/
+home/.omp/agent/memories/
+home/.omp/agent/last-changelog-version
+home/.omp/natives/
+home/.omp/run/
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ — but lib/ holds this installer's helpers.
+!lib/

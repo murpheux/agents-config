@@ -51,6 +51,12 @@ Other cost levers: `autoCompactWindow: 200000`, `BASH_MAX_OUTPUT_LENGTH=20000`, 
 ## Install
 
 ```bash
-cd ~/agent-configs/claude-code && DRY_RUN=1 ./install.sh && ./install.sh     # add --gateway for Agentgateway
-./mcp/add-mcp-servers.sh
+cd ~/AI_Workspace/Projects/agents-config/agent-configs/claude-code
+DRY_RUN=1 ./install.sh && ./install.sh        # → $CLAUDE_CONFIG_DIR, or ~/.claude when unset
+./install.sh --both                           # → ~/.claude AND ~/.config/claude
+./install.sh --target ~/.config/claude        # → one explicit dir (repeatable: --target A --target B)
+./install.sh --both --gateway                 # any target choice combines with --gateway
+CLAUDE_CONFIG_DIR=~/.config/claude ./mcp/add-mcp-servers.sh   # MCP servers: once per config dir (each has its own .claude.json)
 ```
+
+Claude Code reads its user config from `$CLAUDE_CONFIG_DIR`, falling back to `~/.claude`. The sources ship with `~/.claude/…` paths (hook and status-line commands, deny rules, docs). For any other target, `install.sh` rewrites only the home-anchored forms in the files it just installed, and reports how many it changed. Project-relative `.claude/` rules and your own data in the config dir (memories, projects, todos) are never touched. The installer warns when none of the targets is the directory Claude Code currently reads.

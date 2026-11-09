@@ -1,0 +1,17 @@
+{
+  "_comment": "Applied by install.sh with `omp config set <key> <json>` — omp's own writer, so your other config.yml keys are kept and enums are validated. Role names are the chat roles from omp's model browser (default, smol, slow, vision, plan, commit, tiny, memory, task, advisor, widget); values are `omp models` selectors. Every auxiliary role (titles/commit/memory/advisor/widget) goes to the gateway too.",
+  "modelRoles": {
+    "default": "agentgateway/claude-sonnet-5",
+    "smol": "agentgateway/deepseek-flash",
+    "slow": "agentgateway/openrouter/openai/gpt-6-sol",
+    "plan": "agentgateway/openrouter/openai/gpt-6-sol",
+    "task": "agentgateway/claude-sonnet-5",
+    "vision": "agentgateway/claude-sonnet-5",
+    "commit": "agentgateway/deepseek-flash",
+    "tiny": "agentgateway/deepseek-flash",
+    "memory": "agentgateway/deepseek-flash",
+    "advisor": "agentgateway/openrouter/openai/gpt-6-sol",
+    "widget": "agentgateway/deepseek-flash"
+  },
+  "tools.approvalMode": "write"
+}

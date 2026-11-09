@@ -217,6 +217,8 @@ const PROTECTED_PATH_PATTERNS: RegExp[] = [
   /\.tfstate(\.backup)?$/,
   /\.(key|pfx|p12|kdbx)$/,
   /(^|\/)(id_rsa|id_ed25519|id_ecdsa)$/,
+  /(^|\/)\.claude\/\.credentials\.json$/,
+  /(^|\/)\.config\/claude\/\.credentials\.json$/,
   /(^|\/)\.pi\/agent\/auth\.json$/,
   /(^|\/)\.pi\/agent\/mcp-auth\.json$/,
   /(^|\/)\.git\//,

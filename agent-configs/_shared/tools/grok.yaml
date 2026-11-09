@@ -1,0 +1,30 @@
+# Build spec for grok-cli (@vibe-kit/grok-cli, CLI reports 1.0.1). Rendered by _shared/build.py into grok/home/.grok.
+# grok-cli has no subagents, hooks, skills or global MCP; its only instruction source is GROK.md (project
+# .grok/GROK.md REPLACES ~/.grok/GROK.md). Hand-maintained alongside this spec: grok-env.sh (wrapper),
+# grok-preload.cjs (guard/model/request shim loaded via NODE_OPTIONS) and user-settings.fragment.json.
+instructions:
+  - out: home/.grok/GROK.md
+guard_out:
+  - home/.grok/guard
+placeholders:
+  TOOL_NOTE: |
+    > **Grok CLI note:** this is `~/.grok/GROK.md`, grok-cli's global custom instructions. A project `.grok/GROK.md` *replaces* it entirely (they are not merged) — copy what you need into it. grok-cli has no subagents, hooks, skills or global MCP. It asks before file edits and shell commands in interactive mode only (`-p` headless mode and `grok git commit-and-push` auto-approve everything); the `grok` wrapper preloads a guard (`~/.grok/grok-preload.cjs` → shared `guard.py`) that blocks destructive and secret-reading commands and protected file paths in every mode.
+  TOOL_ENFORCEMENT_SUMMARY: |
+    grok-cli's confirmation prompts for file edits and shell commands (interactive mode), the guard preload that the `grok` wrapper loads via `NODE_OPTIONS` (`~/.grok/grok-preload.cjs` → shared `~/.grok/guard/guard.py` + `guardrails.json`, fail-closed), and the `ggshield` pre-commit hook
+  TOOL_ENFORCEMENT_TEXT: |
+    The guard preload is authoritative — it checks every shell command and every file read/write before it runs.
+  TOOL_INTERACTIVE: |
+    The guard preload blocks interactive programs (editors, pagers, bare REPLs).
+  TOOL_TEAM: |
+    grok-cli runs one model in one session, so the router is Murpheux + model switches. Every model is an Agentgateway model (`https://scarlet:9443/v1`):
+
+    | Role | How in grok-cli | Model |
+    |---|---|---|
+    | router / quick answers, explorer, reviewer | `grok -m deepseek-flash` or `/models` | `deepseek-flash` |
+    | developer, sre | default session | `claude-sonnet-5` |
+    | planner, architect | `grok -m openrouter/openai/gpt-6-sol` | `openrouter/openai/gpt-6-sol` |
+    | security | `grok -m openrouter/anthropic/claude-opus-5-5` — HIGH_RISK and security only | `openrouter/anthropic/claude-opus-5-5` |
+
+    grok-cli has no skills loader: when a task matches a topic skill (`golang`, `terraform`, `aws`, `docker-swarm`, …), read `~/.agents/skills/<name>/SKILL.md` with `view_file` first — only the one you need. `/models` changes the model for the current project (saved in `.grok/settings.json`).
+  TOOL_APPROVALS: |
+    How grok-cli enforces this: in interactive mode every file write and shell command asks for confirmation (never choose "don't ask again" for a session); headless `-p` and `grok git commit-and-push` auto-approve everything, so the guard preload is the only check there. The preload blocks destructive, secret-reading and interactive commands, the approval-required ones (`git push`, `git reset --hard`, `docker stack rm`, destructive SQL — prepare them and let Murpheux run them), and reads/writes of protected paths, and it strips gateway/API keys from the shell environment; `~/AI_Workspace/` is the only tree to touch without asking first.

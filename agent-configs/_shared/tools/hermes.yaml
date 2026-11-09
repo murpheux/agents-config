@@ -1,0 +1,65 @@
+# Build spec for Hermes Agent (NousResearch/hermes-agent, v0.21.x). Rendered by _shared/build.py into
+# hermes/home/.hermes (HERMES_HOME). Hand-maintained alongside this spec: config.fragment.yaml,
+# agent-hooks/guardrails-hook.py, hermes-env.sh and lib/configure-hermes.py.
+#
+# Global instructions → SOUL.md: it is the only HERMES_HOME-level instruction slot ("identity slot #1",
+# always loaded; agent/prompt_builder.py load_soul_md). AGENTS.md is project-only (cwd/git-root chain).
+instructions:
+  - out: home/.hermes/SOUL.md
+guard_out:
+  - home/.hermes/guard
+body_subs:
+  DEV_PERMISSIONS: "Hermes asks before dangerous commands (approvals.mode: manual) and the guardrails pre_tool_call hook blocks destructive, secret-reading and interactive commands and protected paths — including the approval-required ones such as `git push`, which you prepare for Murpheux to run."
+placeholders:
+  TOOL_NOTE: |
+    > **Hermes note:** this is `~/.hermes/SOUL.md` — Hermes' only global instruction slot (identity slot #1, always loaded from `HERMES_HOME`; `config.yaml` pins `context_file_max_chars: 40000` so it is never middle-truncated). Project instructions come from the first match of `.hermes.md` → `AGENTS.override.md` → `AGENTS.md` (git-root → cwd chain) → `CLAUDE.md` → `.cursorrules`. Enforcement lives in `config.yaml`: the fail-closed `guardrails` `pre_tool_call` shell hook (shared guard) and Hermes' own approval prompts (`approvals.mode: manual`).
+  TOOL_ENFORCEMENT_SUMMARY: |
+    the `guardrails` `pre_tool_call` shell hook (`~/.hermes/agent-hooks/guardrails-hook.py` → shared `~/.hermes/guard/guard.py` + `guardrails.json`, `fail_closed: true`), Hermes' approval prompts for dangerous commands (`approvals.mode: manual`), secret redaction (`security.redact_secrets`), and the `ggshield` pre-commit hook
+  TOOL_ENFORCEMENT_TEXT: |
+    The guardrails hook and Hermes' approval prompts are authoritative.
+  TOOL_INTERACTIVE: |
+    The guardrails hook blocks interactive programs (editors, pagers, bare REPLs).
+  TOOL_TEAM: |
+    The main Hermes session is the router. Real subagents come from the `delegate_task` tool: fresh children with only the `goal`/`context` you pass (no named roles; `delegation.model` is one global pin), so each specialist is a **role skill** the child is told to load. Every model is an Agentgateway model on the `custom:agentgateway` provider (`https://scarlet:9443/v1`):
+
+    | Role | How in Hermes | Model |
+    |---|---|---|
+    | router | the main session (this file) | `claude-sonnet-5` (default) |
+    | explorer | `read_file` / `search_files` directly, or a `delegate_task` child for broad searches | inherits |
+    | planner | `/role-planner`, or built-in `/plan` (writes `.hermes/plans/`) | `/model custom:agentgateway:openrouter/openai/gpt-6-sol` |
+    | developer | `/role-developer`; parallel or long work → `delegate_task` with "load role-developer" in `context` | `claude-sonnet-5` |
+    | sre | `/role-sre` + `incident-response`/`docker-swarm`/`kubernetes` | `claude-sonnet-5` |
+    | architect | `/role-architect` | `openrouter/openai/gpt-6-sol` |
+    | reviewer | `/role-reviewer` on the diff (or a `delegate_task` child so the review is independent) | `deepseek-flash` |
+    | security | `/role-security` | `openrouter/anthropic/claude-opus-5-5` — HIGH_RISK and security only |
+
+    Workflow skills: `/wf-review`, `/wf-commit`, `/wf-plan`, `/wf-test`, `/wf-explain`, `/wf-summarize`, `/wf-pr`, `/wf-scaffold`, `/wf-security-scan`, `/wf-iac-review`, `/wf-threat-model`, `/wf-write-adr`, `/wf-incident`, `/wf-cost-review`, `/wf-diagram`, `/wf-image` (prefixed so they never shadow built-ins like `/plan`, `/review`, `/image`). Topic skills (`golang`, `terraform`, `aws`, …) load from `~/.agents/skills` via `skills.external_dirs`. Title generation and context compression run on `deepseek-flash`.
+  TOOL_APPROVALS: |
+    How Hermes enforces this: `approvals.mode: manual` prompts before commands Hermes classifies as dangerous; the `guardrails` `pre_tool_call` shell hook (`fail_closed: true`, so a crashed or missing guard blocks the call) runs the shared guard on every `terminal`, `read_file`, `search_files`, `write_file` and `patch` call and blocks destructive, secret-reading and interactive commands and protected paths — and the approval-required ones (`git push`, `git reset --hard`, `docker stack rm`, destructive SQL), which you prepare for Murpheux to run; subagents never auto-approve (`delegation.subagent_auto_approve: false`); secrets are redacted from output (`security.redact_secrets: true`).
+agents:
+  - id: planner
+    out: home/.hermes/skills/murpheux-roles/role-planner/SKILL.md
+    frontmatter: {name: role-planner, description: "Decomposes COMPLEX/EXPERT/HIGH_RISK requests into a short executable plan before implementing. Read-only."}
+  - id: developer
+    out: home/.hermes/skills/murpheux-roles/role-developer/SKILL.md
+    frontmatter: {name: role-developer, description: "Implements code, scripts (bash/zsh/PowerShell), IaC and CI/CD in C#, Go, Python, Node/TS and validates with the project's build/test/lint. Use for NORMAL and COMPLEX implementation."}
+  - id: sre
+    out: home/.hermes/skills/murpheux-roles/role-sre/SKILL.md
+    frontmatter: {name: role-sre, description: "SRE/DevOps for live systems — incident triage, Docker Swarm, Kubernetes, cloud resources, CI/CD failures, observability. Read-only diagnosis first; mutations need approval."}
+  - id: architect
+    out: home/.hermes/skills/murpheux-roles/role-architect/SKILL.md
+    frontmatter: {name: role-architect, description: "Solution & cloud architecture (AWS/Azure/GCP), distributed systems, platform/Kubernetes design, migrations, trade-offs, ADRs and diagrams; hard root-cause analysis."}
+  - id: reviewer
+    out: home/.hermes/skills/murpheux-roles/role-reviewer/SKILL.md
+    frontmatter: {name: role-reviewer, description: "Cheap independent read-only review of a diff for correctness, regressions, missing tests and obvious security issues. Use after meaningful changes."}
+  - id: security
+    out: home/.hermes/skills/murpheux-roles/role-security/SKILL.md
+    frontmatter: {name: role-security, description: "Security specialist — threat modeling, IAM/policy review, secrets and supply-chain analysis, vulnerability review of code/IaC/containers; the independent reviewer for HIGH_RISK changes. Read-only; runs scanners."}
+commands:
+  format: skill
+  out: home/.hermes/skills/murpheux-workflows
+  prefix: "wf-"
+  invoke_hint: "`/{sid}`"
+  delegate: "Follow the `role-{{ROLE}}` skill (load it with `/role-{{ROLE}}` or `skill_view`). For long or parallel work, hand it to `delegate_task` with a self-contained goal and context that tells the child to load `role-{{ROLE}}` first, then summarise its result."
+  role_text:
+    explorer: "Answer directly with `read_file` / `search_files` (read-only); no delegation needed."

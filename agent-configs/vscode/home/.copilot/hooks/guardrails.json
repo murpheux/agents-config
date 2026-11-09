@@ -43,7 +43,7 @@
       "(^|/)\\.aws/credentials$", "(^|/)\\.gnupg/", "(^|/)\\.config/op/", "(^|/)\\.kube/config",
       "(^|/)\\.docker/config\\.json$", "\\.tfstate(\\.backup)?$", "\\.(key|pfx|p12|kdbx)$",
       "(^|/)(id_rsa|id_ed25519|id_ecdsa)$",
-      "(^|/)\\.config/opencode/service\\.json$", "(^|/)\\.claude/\\.credentials\\.json$", "(^|/)\\.codex/auth\\.json$",
+      "(^|/)\\.config/opencode/service\\.json$", "(^|/)\\.claude/\\.credentials\\.json$", "(^|/)\\.config/claude/\\.credentials\\.json$", "(^|/)\\.codex/auth\\.json$",
       "(^|/)\\.local/share/opencode/"
     ],
     "write_only": [

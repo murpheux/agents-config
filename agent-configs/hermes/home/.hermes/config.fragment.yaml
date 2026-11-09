@@ -1,0 +1,58 @@
+# Merged into ~/.hermes/config.yaml by lib/configure-hermes.py (your other keys are kept; a backup is made).
+# __OP__, __HERMES_HOME__ and __HOOK_CMD__ are resolved to absolute paths at install time.
+
+# Main model on the named provider below (`custom:<name>` targets a providers: entry —
+# hermes_cli/runtime_provider_custom.py). base_url is cleared so no stale endpoint wins.
+model:
+  provider: custom:agentgateway
+  default: claude-sonnet-5
+  base_url: ""
+
+providers:
+  agentgateway:
+    name: Agentgateway (scarlet)
+    api: https://scarlet:9443/v1
+    transport: chat_completions
+    # Hermes runs this itself (shell, 15 s timeout, re-minted every 15 min, never logged —
+    # agent/command_token_source.py) and key_cmd beats key_env/api_key, so no key is stored anywhere.
+    key_cmd: "__OP__ read op://private/agent-gateway-api-key/password"
+    # Per-provider CA wins over SSL_CERT_FILE (agent/ssl_verify.py resolve_httpx_verify); the bundle is
+    # the OS trust store (public roots + the keychain-trusted gateway cert), built by install.sh.
+    ssl_ca_cert: "__HERMES_HOME__/ca-bundle.pem"
+    discover_models: false
+    default_model: claude-sonnet-5
+    # Exact gateway ids that work over chat completions (Claude 5.5 needs the Messages API and
+    # gpt-6.1-sol the Responses API — reach them via claude-sonnet-5 / the openrouter/* passthrough).
+    models:
+      deepseek-flash: {context_length: 128000}
+      claude-sonnet-5: {context_length: 128000}
+      openrouter/openai/gpt-6-sol: {context_length: 128000}
+      openrouter/anthropic/claude-opus-5-5: {context_length: 128000}
+
+# SOUL.md carries the full global instructions (~28 KB); the default floor (20 000 chars) would
+# head/tail-truncate the guardrails section (agent/prompt_builder.py _get_context_file_max_chars).
+context_file_max_chars: 40000
+
+# Cheap side-jobs on the main (gateway) provider; everything else stays `auto` (= main model).
+auxiliary:
+  title_generation: {provider: main, model: deepseek-flash}
+  compression: {provider: main, model: deepseek-flash}
+
+# Topic skills are shared with Codex/Copilot/Cline — not duplicated here.
+skills:
+  external_dirs:
+    - ~/.agents/skills
+
+approvals:
+  mode: manual
+delegation:
+  subagent_auto_approve: false
+security:
+  redact_secrets: true
+
+hooks:
+  pre_tool_call:
+    - matcher: "terminal|read_file|search_files|write_file|patch"
+      command: "__HOOK_CMD__"
+      timeout: 15
+      fail_closed: true

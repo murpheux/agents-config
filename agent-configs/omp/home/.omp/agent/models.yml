@@ -1,0 +1,25 @@
+# ~/.omp/agent/models.yml — custom providers for oh-my-pi (omp 18.x).
+# Verified against omp 18.18.3 (see README "Sources"):
+#   - apiKey is an ENVIRONMENT VARIABLE NAME. omp resolves `apiKey: AGENTGATEWAY_API_KEY` from the env
+#     and sends `$NAME` / `${NAME}` literally (unlike Pi). The omp wrapper (~/.omp/agent/omp-env.sh)
+#     fills AGENTGATEWAY_API_KEY from 1Password at launch; models.yml outranks omp's stored credentials.
+#   - Unknown keys are silently ignored, so only keys omp demonstrably applies are used here
+#     (contextWindow/maxTokens were checked to change `omp models --json`).
+#   - Only chat-completions-safe gateway ids: Claude 5.5 needs the Messages API and gpt-6.1-sol the
+#     Responses API, and per-model `api` overrides couldn't be verified offline — so Claude goes through
+#     claude-sonnet-5 and the openrouter/* passthrough.
+providers:
+  agentgateway:
+    baseUrl: https://scarlet:9443/v1
+    api: openai-completions
+    apiKey: AGENTGATEWAY_API_KEY
+    models:
+      - id: deepseek-flash
+        name: DeepSeek Flash (gateway)
+        contextWindow: 128000
+      - id: claude-sonnet-5
+        name: Claude Sonnet 5 (gateway)
+      - id: openrouter/openai/gpt-6-sol
+        name: GPT-6 Sol (gateway → OpenRouter)
+      - id: openrouter/anthropic/claude-opus-5-5
+        name: Claude Opus 5.5 (gateway → OpenRouter)

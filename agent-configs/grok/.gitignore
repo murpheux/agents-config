@@ -1,0 +1,12 @@
+# grok-cli runtime state and secrets — never commit. install.sh copies only its CONFIG_FILES list.
+home/.grok/user-settings.json
+home/.grok/settings.json
+home/.grok/ca-bundle.pem
+home/.grok/hooks/
+home/.grok/skills/
+.env
+__pycache__/
+*.pyc
+
+# The repo-root .gitignore (Python template) ignores every lib/ — but lib/ holds this installer's helpers.
+!lib/

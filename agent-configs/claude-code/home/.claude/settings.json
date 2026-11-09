@@ -20,6 +20,9 @@
     "BASH_MAX_OUTPUT_LENGTH": "20000",
     "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2",
     "CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "4",
+    "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
+    "CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT": "1",
+    "CLAUDE_CODE_MAX_CONTEXT_TOKENS": "1024000",
     "DISABLE_TELEMETRY": "1",
     "GIT_PAGER": "cat",
     "PAGER": "cat"
@@ -95,7 +98,43 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear|compact|fork)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/murpheux/.config/claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
     ]
+  },
+
+  "enabledPlugins": {
+    "warp@claude-code-warp": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-code-warp": {
+      "source": {
+        "source": "github",
+        "repo": "warpdotdev/claude-code-warp"
+      }
+    }
+  },
+  "syntaxHighlightingDisabled": false,
+  "modelSettings": {
+    "deepseek/deepseek-flash": {
+      "effortLevel": "low"
+    },
+    "deepseek-flash": {
+      "effortLevel": "low"
+    },
+    "claude-opus-5-5": {
+      "effortLevel": "high"
+    }
   },
 
   "sandbox": {
@@ -113,5 +152,7 @@
         "learn.microsoft.com", "docs.aws.amazon.com", "mcp.context7.com", "scarlet"
       ]
     }
-  }
+  },
+  "theme": "dark",
+  "autoCompactEnabled": false
 }

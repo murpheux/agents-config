@@ -1,0 +1,12 @@
+{
+  "_comment": "Applied to ~/.grok/user-settings.json by lib/configure-settings.py: models REPLACED with exact Agentgateway ids (chat completions), apiKey removed (the grok wrapper injects GROK_API_KEY). The grok wrapper also pins GROK_BASE_URL, so baseURL here only matters for a bare `command grok`.",
+  "baseURL": "https://scarlet:9443/v1",
+  "defaultModel": "claude-sonnet-5",
+  "models": [
+    "claude-sonnet-5",
+    "deepseek-flash",
+    "openrouter/openai/gpt-6-sol",
+    "openrouter/anthropic/claude-opus-5-5"
+  ],
+  "settingsVersion": 2
+}
