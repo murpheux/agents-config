@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -maxdepth 2 -iname \"*venv*\" -o -iname \"requirements*.txt\")",
+      "Bash(python3 -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(pip3 show *)"
+    ]
+  }
+}

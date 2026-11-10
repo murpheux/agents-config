@@ -1,13 +1,13 @@
 {
   "_comment": "Optional overlay: route Claude Code through Agentgateway (LiteLLM /v1/messages passthrough). Merged into ~/.claude/settings.json by `./install.sh --gateway`. The key is fetched by Claude Code itself via apiKeyHelper — it never enters model context.",
-  "apiKeyHelper": "op read op://AI/agentgateway/credential",
+  "apiKeyHelper": "op read op://private/agent-gateway-api-key/password",
   "env": {
-    "ANTHROPIC_BASE_URL": "https://scarlet:4000",
+    "ANTHROPIC_BASE_URL": "https://scarlet:9443",
     "CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY": "1",
     "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1",
     "NODE_EXTRA_CA_CERTS": "__HOME__/.config/homelab-ca.pem",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5",
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5",
-    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5"
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "anthropic/claude-sonnet-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "anthropic/claude-opus-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "anthropic/claude-haiku-5-5"
   }
 }

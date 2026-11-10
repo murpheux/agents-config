@@ -9,6 +9,7 @@ api_key_env = "AGENTGATEWAY_API_KEY"   # name only; the wrapper fills it from 1P
 [models.claude-sonnet-5]
 provider = "agentgateway"
 model = "claude-sonnet-5"
+max_context_size = 200000
 
 [[hooks]]
 event = "PreToolUse"
