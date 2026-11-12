@@ -1,0 +1,123 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "~/.openclaw/workspace",
+      "authInheritance": {
+        "agentId": "main"
+      },
+      "model": {
+        "primary": "deepseek/deepseek-flash"
+      },
+      "thinkingDefault": "low"
+    },
+    "entries": {
+      "main": {
+        "name": "main",
+        "workspace": "~/.openclaw/workspace",
+        "agentDir": "~/.openclaw/agents/main/agent",
+        "identity": {
+          "name": "main"
+        },
+        "model": {
+          "primary": "deepseek/deepseek-flash"
+        }
+      }
+    }
+  },
+  "gateway": {
+    "mode": "remote",
+    "provider": "agentgateway",
+    "baseUrl": "https://scarlet:9443/v1",
+    "auth": {
+      "mode": "token",
+      "token": {
+        "source": "store",
+        "provider": "default",
+        "id": "AGENTGATEWAY_API_KEY"
+      }
+    },
+    "port": 18789,
+    "bind": "lan"
+  },
+  "models": {
+    "providers": {
+      "agentgateway": {
+        "baseUrl": "https://scarlet:9443/v1",
+        "apiKey": {
+          "source": "store",
+          "provider": "default",
+          "id": "AGENTGATEWAY_API_KEY"
+        },
+        "models": [
+          {
+            "id": "anthropic/claude-opus-5-5",
+            "name": "Claude Opus 5.5"
+          },
+          {
+            "id": "anthropic/claude-sonnet-5.5",
+            "name": "Claude Sonnet 5.5"
+          },
+          {
+            "id": "anthropic/claude-haiku-5.5",
+            "name": "Claude Haiku 5.5"
+          },
+          {
+            "id": "deepseek/deepseek-flash",
+            "name": "DeepSeek Flash"
+          },
+          {
+            "id": "deepseek/deepseek-reasoner",
+            "name": "DeepSeek Reasoner"
+          },
+          {
+            "id": "google/gemini-2.5-flash",
+            "name": "Gemini 2.5 Flash"
+          }
+        ]
+      }
+    }
+  },
+  "channels": {
+    "slack": {
+      "enabled": false
+    },
+    "discord": {
+      "enabled": false
+    },
+    "telegram": {
+      "enabled": false
+    }
+  },
+  "plugins": {
+    "entries": {
+      "anthropic": {
+        "enabled": true
+      },
+      "deepseek": {
+        "enabled": true
+      },
+      "github": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": false
+      }
+    }
+  },
+  "sandbox": {
+    "mode": "full"
+  },
+  "ui": {
+    "prefs": {
+      "sidebarEntries": [
+        "route:sessions",
+        "route:activity",
+        "route:tasks",
+        "route:usage"
+      ]
+    }
+  }
+}

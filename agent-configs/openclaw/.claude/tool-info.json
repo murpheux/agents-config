@@ -1,0 +1,21 @@
+{
+  "toolId": "openclaw",
+  "name": "OpenClaw",
+  "description": "Multi-agent orchestration platform with agentgateway as default provider",
+  "version": "1.0.0",
+  "homepage": "https://openclaw.ai",
+  "provider": "agentgateway",
+  "gatewayUrl": "https://scarlet:9443/v1",
+  "configPath": "~/.openclaw/config.json",
+  "workspacePath": "~/.openclaw/workspace",
+  "features": [
+    "multi-agent orchestration",
+    "distributed workspace",
+    "gateway integration",
+    "model selection per agent",
+    "credential management",
+    "plugin ecosystem"
+  ],
+  "installScript": "install.sh",
+  "backupLocation": "~/.agent-config-backups/openclaw/"
+}

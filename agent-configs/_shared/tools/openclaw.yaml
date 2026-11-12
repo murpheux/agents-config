@@ -1,0 +1,49 @@
+# Build spec for OpenClaw (2026.9.2 agent orchestration platform).
+# Rendered by _shared/build.py into openclaw/home/.openclaw/openclaw.json
+#
+# OpenClaw is a configuration-driven multi-agent platform:
+# - Configuration: ~/.openclaw/openclaw.json (JSON5 format)
+# - Agents: defined inline in config + ~/.openclaw/agents/<name>/agent/system.md
+# - Gateway: agentgateway (https://scarlet:9443/v1) as default provider
+# - Skills: ~/.openclaw/skills/<skill-id>/SKILL.md (on-demand loading)
+# - Channels: Slack, Discord, Telegram, WhatsApp integrations with access control
+# - NO separate guard files (guardrails/hooks) — access control in config
+# - NO MCPs (Model Context Protocol) — use Skills instead
+
+instructions:
+  - out: home/.openclaw/CONVENTIONS.md
+skills_out:
+  - home/.openclaw/skills
+placeholders:
+  TOOL_NOTE: |
+    > **OpenClaw note:** this is `~/.openclaw/CONVENTIONS.md`, agent conventions documentation. Configuration lives at `~/.openclaw/openclaw.json` (JSON5 format). A project `.openclaw/CONVENTIONS.md` *augments* this with project-specific guidance. OpenClaw agents (2026.9.2) run via agentgateway (`https://scarlet:9443/v1`) with configuration-driven guardrails (no separate hooks).
+  TOOL_ENFORCEMENT_SUMMARY: |
+    OpenClaw's built-in configuration validation (JSON5 schema checks, auth inheritance, workspace availability), agent workspace isolation, credential store integration (no inline secrets), and `ggshield` pre-commit scanning for any committed configs.
+  TOOL_ENFORCEMENT_TEXT: |
+    OpenClaw configuration is authoritative — access control (allowlists, mention rules) is inline in openclaw.json (not separate files), secrets use credential stores (`source: store, provider: default, id: KEY_NAME`), agents are workspace-isolated, and gateway auth is token-scoped.
+  TOOL_INTERACTIVE: |
+    OpenClaw agents run in non-interactive mode by design — no TTY, pagers, or REPLs. All agent interactions are event-driven (chat messages, webhooks, scheduled tasks). Skills are loaded on-demand.
+  TOOL_TEAM: |
+    OpenClaw deploys agents via agentgateway (`https://scarlet:9443/v1`) with per-agent model selection:
+
+    | Role | Default Model | Configuration |
+    |---|---|---|
+    | router / quick answers | `deepseek/deepseek-flash` | `agents.defaults.model.primary` |
+    | explorer / assistant | `deepseek/deepseek-flash` | agent-scoped override in `agents.entries.<id>.model` |
+    | developer / SRE | `anthropic/claude-sonnet-4.5` | agent-scoped override |
+    | architect / complex reasoning | `anthropic/claude-opus-5` | agent-scoped override |
+    | security / threat modeling | `anthropic/claude-opus-5` | agent-scoped override |
+
+    Agents inherit auth from `agents.defaults.authInheritance` (default: `agentId: main`). Skills are discovered at `~/.openclaw/skills/<skill-id>/SKILL.md` and loaded on-demand. Channels (Slack, Discord, Telegram, WhatsApp) enforce access control via allowlists and mention rules (all in openclaw.json).
+  TOOL_APPROVALS: |
+    How OpenClaw enforces this: configuration validation at startup (JSON5 schema, auth chains, workspace directories), agent workspace isolation (per-agent `workspace` field), credential store-only secrets (inline secrets detected and rejected), channel-based access control via allowlists/mention rules (inline in openclaw.json), and `ggshield` pre-commit scanning. No separate guard.py, guardrails.json, or hooks files needed (unlike Claude Code).
+
+# Agents are configured in openclaw.json only (not here)
+agents: []
+
+# Skills are discovered at ~/.openclaw/skills/<skill-id>/SKILL.md
+# NOT MCPs — Skills are the knowledge mechanism
+
+# Commands/workflows optional, not central to OpenClaw
+commands:
+  skip: [scaffold, threat-model, write-adr]

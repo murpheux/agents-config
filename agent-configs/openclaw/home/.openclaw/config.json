@@ -1,0 +1,208 @@
+{
+  // OpenClaw Configuration (2026.9.2)
+  // Location: ~/.openclaw/openclaw.json
+  // Provider: agentgateway (https://scarlet:9443/v1)
+  // Format: JSON5 (comments and trailing commas allowed)
+
+  // ─────────────────────────────────────────────────────────────
+  // AGENTS: Define AI agents and their defaults
+  // ─────────────────────────────────────────────────────────────
+  agents: {
+    defaults: {
+      // Workspace for agent state (workspace-per-agent is recommended)
+      workspace: "~/.openclaw/workspace",
+
+      // Default auth inheritance: all agents use 'main' agent's auth
+      authInheritance: {
+        agentId: "main"
+      },
+
+      // Available models across all agents
+      models: {
+        "anthropic/claude-opus-5": {},
+        "anthropic/claude-sonnet-4.5": {},
+        "anthropic/claude-haiku-4.5": {},
+        "google/gemini-2.5-flash": {},
+        "deepseek/deepseek-flash": {},
+        "deepseek/deepseek-reasoner": {}
+      },
+
+      // Default model selection
+      model: {
+        primary: "deepseek/deepseek-flash"
+      },
+
+      // Thinking mode for reasoning models
+      thinkingDefault: "low"
+    },
+
+    // Agent entries: customize per agent (overrides defaults)
+    entries: {
+      main: {
+        name: "main",
+        workspace: "~/.openclaw/workspace",
+        // Agent system prompt and definitions
+        agentDir: "~/.openclaw/agents/main/agent",
+        identity: {
+          name: "main"
+        },
+        // Can override default model per agent
+        model: {
+          primary: "deepseek/deepseek-flash"
+        }
+      }
+    }
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // GATEWAY: Model provider and API configuration
+  // ─────────────────────────────────────────────────────────────
+  gateway: {
+    mode: "remote",
+    provider: "agentgateway",
+    baseUrl: "https://scarlet:9443/v1",
+    auth: {
+      mode: "token",
+      token: {
+        source: "store",
+        provider: "default",
+        id: "AGENTGATEWAY_TOKEN"
+      }
+    },
+    port: 18789,
+    bind: "lan"
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // MODELS: Provider configuration for all model sources
+  // ─────────────────────────────────────────────────────────────
+  models: {
+    providers: {
+      // Anthropic models via agentgateway
+      anthropic: {
+        apiKey: {
+          source: "store",
+          provider: "default",
+          id: "ANTHROPIC_API_KEY"
+        }
+      },
+
+      // DeepSeek models via agentgateway
+      deepseek: {
+        baseUrl: "https://api.deepseek.com",
+        apiKey: {
+          source: "store",
+          provider: "default",
+          id: "DEEPSEEK_API_KEY"
+        },
+        api: "openai-completions",
+        models: [
+          {
+            id: "deepseek-chat",
+            name: "DeepSeek V3 (Chat)"
+          },
+          {
+            id: "deepseek-reasoner",
+            name: "DeepSeek R1 (Reasoner)"
+          }
+        ]
+      },
+
+      // Google models via agentgateway
+      google: {
+        apiKey: {
+          source: "store",
+          provider: "default",
+          id: "GOOGLE_API_KEY"
+        }
+      },
+
+      // Agentgateway is the primary provider
+      agentgateway: {
+        baseUrl: "https://scarlet:9443/v1",
+        apiKey: {
+          source: "store",
+          provider: "default",
+          id: "AGENTGATEWAY_TOKEN"
+        },
+        isGateway: true
+      }
+    }
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // CHANNELS: Chat app integrations (Slack, Discord, Telegram, WhatsApp)
+  // Access control lists and mention rules defined here
+  // ─────────────────────────────────────────────────────────────
+  channels: {
+    slack: {
+      enabled: false,
+      // botToken and appToken from credential store
+      // dmPolicy: "allowlist"
+      // allowFrom: ["U0BUWDYBEDD"]
+    },
+    discord: {
+      enabled: false,
+      // token from credential store
+      // dmPolicy: "allowlist"
+      // allowFrom: ["840242350344634419"]
+    },
+    telegram: {
+      enabled: false,
+      // botToken from credential store
+      // allowFrom: ["6261900965"]
+    }
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // PLUGINS: Optional plugins and integrations
+  // ─────────────────────────────────────────────────────────────
+  plugins: {
+    entries: {
+      anthropic: {
+        enabled: true
+      },
+      deepseek: {
+        enabled: true
+      },
+      github: {
+        enabled: false
+      },
+      slack: {
+        enabled: false
+      },
+      discord: {
+        enabled: false
+      }
+    }
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // SKILLS: Teach agents repeatable procedures
+  // Skills are discovered at ~/.openclaw/skills/<skill-id>/SKILL.md
+  // Agents load skills on-demand
+  // ─────────────────────────────────────────────────────────────
+  // Skills configuration per agent can go here (optional)
+
+  // ─────────────────────────────────────────────────────────────
+  // SANDBOXING & ACCESS CONTROL
+  // ─────────────────────────────────────────────────────────────
+  sandbox: {
+    // Full access or sandboxed
+    mode: "full"
+  },
+
+  // ─────────────────────────────────────────────────────────────
+  // UI PREFERENCES
+  // ─────────────────────────────────────────────────────────────
+  ui: {
+    prefs: {
+      sidebarEntries: [
+        "route:sessions",
+        "route:activity",
+        "route:tasks",
+        "route:usage"
+      ]
+    }
+  }
+}
